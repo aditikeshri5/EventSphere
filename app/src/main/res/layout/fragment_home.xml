@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8F7FC">
+
+    <ScrollView
+        android:id="@+id/homeScrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:scrollbars="none"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingTop="22dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="24dp">
+
+            <!-- ========================= -->
+            <!-- GREETING -->
+            <!-- ========================= -->
+
+            <TextView
+                android:id="@+id/tvGreetingSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hi there! 👋"
+                android:textColor="#777777"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvWelcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Welcome to EventSphere"
+                android:textColor="#222222"
+                android:textSize="23sp"
+                android:textStyle="bold" />
+
+
+            <!-- ========================= -->
+            <!-- SEARCH -->
+            <!-- ========================= -->
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/searchCard"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="22dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+
+                    <ImageView
+                        android:id="@+id/searchIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@android:drawable/ic_menu_search"
+                        android:tint="#777777"
+                        android:contentDescription="Search" />
+
+                    <TextView
+                        android:id="@+id/tvSearch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="Search events"
+                        android:textColor="#888888"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+
+            <!-- ========================= -->
+            <!-- CATEGORY TITLE -->
+            <!-- ========================= -->
+
+            <TextView
+                android:id="@+id/tvCategoriesTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:text="Explore categories"
+                android:textColor="#222222"
+                android:textSize="19sp"
+                android:textStyle="bold" />
+
+
+            <!-- ========================= -->
+            <!-- CATEGORY SCROLL -->
+            <!-- ========================= -->
+
+            <HorizontalScrollView
+                android:id="@+id/categoryScroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:scrollbars="none"
+                android:overScrollMode="never">
+
+                <LinearLayout
+                    android:id="@+id/categoryContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+
+                    <!-- ALL -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categoryAll"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="#5033D8"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategoryAll"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="20dp"
+                            android:paddingEnd="20dp"
+                            android:text="All"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                    </androidx.cardview.widget.CardView>
+
+
+                    <!-- MUSIC -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categoryMusic"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategoryMusic"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="🎵 Music"
+                            android:textColor="#444444"
+                            android:textSize="14sp" />
+
+                    </androidx.cardview.widget.CardView>
+
+
+                    <!-- SPORTS -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categorySports"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategorySports"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="⚽ Sports"
+                            android:textColor="#444444"
+                            android:textSize="14sp" />
+
+                    </androidx.cardview.widget.CardView>
+
+
+                    <!-- CULTURE -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categoryCulture"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategoryCulture"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="🎭 Culture"
+                            android:textColor="#444444"
+                            android:textSize="14sp" />
+
+                    </androidx.cardview.widget.CardView>
+
+
+                    <!-- HACKATHONS -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categoryHackathons"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategoryHackathons"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="💻 Hackathons"
+                            android:textColor="#444444"
+                            android:textSize="14sp" />
+
+                    </androidx.cardview.widget.CardView>
+
+
+                    <!-- WORKSHOPS -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categoryWorkshops"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategoryWorkshops"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="🧑‍🏫 Workshops"
+                            android:textColor="#444444"
+                            android:textSize="14sp" />
+
+                    </androidx.cardview.widget.CardView>
+
+
+                    <!-- COMPETITIONS -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categoryCompetitions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategoryCompetitions"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="🏆 Competitions"
+                            android:textColor="#444444"
+                            android:textSize="14sp" />
+
+                    </androidx.cardview.widget.CardView>
+
+
+                    <!-- FESTS -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categoryFests"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategoryFests"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="🎉 Fests"
+                            android:textColor="#444444"
+                            android:textSize="14sp" />
+
+                    </androidx.cardview.widget.CardView>
+
+
+                    <!-- CONCERTS -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categoryConcerts"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategoryConcerts"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="🎤 Concerts"
+                            android:textColor="#444444"
+                            android:textSize="14sp" />
+
+                    </androidx.cardview.widget.CardView>
+
+
+                    <!-- CAREER -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categoryCareer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategoryCareer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="💼 Career"
+                            android:textColor="#444444"
+                            android:textSize="14sp" />
+
+                    </androidx.cardview.widget.CardView>
+
+
+                    <!-- ARTS -->
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/categoryArts"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="21dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvCategoryArts"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="🎨 Arts"
+                            android:textColor="#444444"
+                            android:textSize="14sp" />
+
+                    </androidx.cardview.widget.CardView>
+
+                </LinearLayout>
+
+            </HorizontalScrollView>
+
+
+            <!-- ========================= -->
+            <!-- EVENTS TITLE -->
+            <!-- ========================= -->
+
+            <TextView
+                android:id="@+id/tvEventsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:text="Upcoming Events"
+                android:textColor="#222222"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvEventsSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Discover events happening soon"
+                android:textColor="#777777"
+                android:textSize="14sp" />
+
+
+            <!-- ========================= -->
+            <!-- EVENTS RECYCLER VIEW -->
+            <!-- ========================= -->
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerEvents"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
+
+
+            <!-- ========================= -->
+            <!-- EMPTY STATE -->
+            <!-- ========================= -->
+
+            <TextView
+                android:id="@+id/tvNoEvents"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:gravity="center"
+                android:text="No events available right now."
+                android:textColor="#777777"
+                android:textSize="15sp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

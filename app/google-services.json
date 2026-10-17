@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "67119651014",
+    "project_id": "eventsphere-675dc",
+    "storage_bucket": "eventsphere-675dc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67119651014:android:9b8d574646fb27da509fc7",
+        "android_client_info": {
+          "package_name": "com.la.eventsphere"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "67119651014-f5aqiahpabq144ki95qs2plv62icsaf1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.la.eventsphere",
+            "certificate_hash": "eb0b695f81aa9aae6f04243cc7b4f01dca6ad8fd"
+          }
+        },
+        {
+          "client_id": "67119651014-12o1a41iod80n4k7stkg4910t2c89vhq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhSfMOwJfhzNEl_KjX9pFbUiswKkHlzag"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "67119651014-12o1a41iod80n4k7stkg4910t2c89vhq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

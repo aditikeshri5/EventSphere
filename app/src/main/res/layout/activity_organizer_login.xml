@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8F7FC"
+    android:fillViewport="true"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#F8F7FC">
+
+        <!-- Purple Header -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:background="#5033D8"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <View
+                android:layout_width="135dp"
+                android:layout_height="135dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="-35dp"
+                android:layout_marginEnd="-35dp"
+                android:background="@drawable/organizer_logo_bg"
+                android:alpha="0.35" />
+
+            <View
+                android:layout_width="105dp"
+                android:layout_height="105dp"
+                android:layout_gravity="center_vertical|start"
+                android:layout_marginStart="-45dp"
+                android:background="@drawable/organizer_logo_bg"
+                android:alpha="0.30" />
+
+            <!-- Back Button -->
+            <TextView
+                android:id="@+id/btnOrganizerBack"
+                android:layout_width="100dp"
+                android:layout_height="48dp"
+                android:layout_gravity="top|start"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="24dp"
+                android:text="‹  Back"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:elevation="10dp"
+                android:background="?attr/selectableItemBackground" />
+
+            <!-- Organizer Logo -->
+            <TextView
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="76dp"
+                android:gravity="center"
+                android:text="E"
+                android:textColor="#FFFFFF"
+                android:textSize="36sp"
+                android:textStyle="bold"
+                android:background="@drawable/organizer_logo_bg" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="150dp"
+                android:text="EventSphere"
+                android:textColor="#FFFFFF"
+                android:textSize="27sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="191dp"
+                android:text="Organizer Portal"
+                android:textColor="#FFFFFF"
+                android:textSize="19sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="222dp"
+                android:gravity="center"
+                android:text="Sign in to create and manage your events"
+                android:textColor="#E5DEFF"
+                android:textSize="12sp" />
+
+            <!-- Organizer Features -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="254dp"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="25dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/organizer_chip_bg"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="Create"
+                    android:textColor="#FFFFFF"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="25dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/organizer_chip_bg"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="Manage"
+                    android:textColor="#FFFFFF"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="25dp"
+                    android:background="@drawable/organizer_chip_bg"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="Events"
+                    android:textColor="#FFFFFF"
+                    android:textSize="10sp" />
+
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- White Login Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/organizer_login_card_bg"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="26dp"
+            android:paddingBottom="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome back"
+                android:textColor="#17152B"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Log in to access your organizer dashboard."
+                android:textColor="#777386"
+                android:textSize="12sp" />
+
+            <!-- Email Field -->
+            <EditText
+                android:id="@+id/etOrganizerEmail"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="22dp"
+                app:boxBackgroundMode="outline"
+                app:boxBackgroundColor="#F8F7FC"
+                app:boxStrokeColor="#D9D2E8"
+                android:background="@drawable/organizer_input_bg"
+                android:hint="Email address"
+                android:inputType="textEmailAddress"
+                android:paddingHorizontal="14dp"
+                android:textColor="#25213A"
+                android:textColorHint="#777386"
+                android:textSize="14sp"
+                android:singleLine="true" />
+
+            <!-- Password Field with Eye Icon -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/organizerPasswordLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:boxBackgroundMode="outline"
+                app:boxBackgroundColor="#F8F7FC"
+                app:boxStrokeColor="#D9D2E8"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:endIconMode="password_toggle"
+                app:endIconTint="#777386"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etOrganizerPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:hint="Password"
+                    android:inputType="textPassword"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:textColor="#25213A"
+                    android:textColorHint="#777386"
+                    android:textSize="14sp"
+                    android:singleLine="true" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Sign In Button -->
+            <Button
+                android:id="@+id/btnOrganizerLogin"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="24dp"
+                android:backgroundTint="#7048F5"
+                android:text="Sign In"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <!-- Registration Link -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:gravity="center"
+                    android:text="Already have an account? "
+                    android:textColor="#777386"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvOrganizerRegister"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:gravity="center"
+                    android:paddingStart="3dp"
+                    android:paddingEnd="3dp"
+                    android:text="Create account"
+                    android:textColor="#5033D8"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center"
+                android:text="Only authorized event organizers can access this portal."
+                android:textColor="#8A849B"
+                android:textSize="10sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
