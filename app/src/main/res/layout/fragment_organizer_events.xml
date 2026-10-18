@@ -1,90 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#F8F7FC"
-    android:padding="18dp">
+    android:padding="16dp">
 
+    <!-- Heading -->
     <TextView
-        android:layout_width="wrap_content"
+        android:id="@+id/tvOrganizerEventsHeading"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="My Events"
-        android:textColor="#25213A"
-        android:textSize="25sp"
-        android:textStyle="bold" />
+        android:text="Manage My Events"
+        android:textColor="#302B40"
+        android:textSize="23sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Subtitle -->
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/tvOrganizerEventsSubtitle"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="Create, update and manage the events you organize."
+        android:text="View and manage events you have published."
         android:textColor="#777386"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/tvOrganizerEventsHeading"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/btnAddOrganizerEvent"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="18dp"
-        android:backgroundTint="#5033D8"
-        android:text="+  Create New Event"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:textSize="15sp"
-        android:textStyle="bold" />
-
+    <!-- Event count -->
     <TextView
         android:id="@+id/tvOrganizerEventsCount"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:layout_marginBottom="10dp"
-        android:text="Your events"
-        android:textColor="#25213A"
+        android:text="Your Events (0)"
+        android:textColor="#302B40"
         android:textSize="17sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/tvOrganizerEventsSubtitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+    <!-- Add event button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAddOrganizerEvent"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:text="+ Create New Event"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        app:backgroundTint="#5033D8"
+        app:cornerRadius="12dp"
+        app:layout_constraintTop_toBottomOf="@id/tvOrganizerEventsCount"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerOrganizerEvents"
+    <!-- Empty state -->
+    <LinearLayout
+        android:id="@+id/layoutNoOrganizerEvents"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="36dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/btnAddOrganizerEvent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="▦"
+            android:textColor="#5033D8"
+            android:textSize="42sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="No events yet"
+            android:textColor="#302B40"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingBottom="12dp" />
-
-        <LinearLayout
-            android:id="@+id/layoutNoOrganizerEvents"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
             android:gravity="center"
-            android:orientation="vertical"
-            android:padding="24dp"
-            android:visibility="gone">
+            android:text="Create your first event and it will appear here."
+            android:textColor="#777386"
+            android:textSize="14sp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="No events yet"
-                android:textColor="#25213A"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+    </LinearLayout>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:text="Create your first event and it can appear in the EventSphere user feed."
-                android:textColor="#777386"
-                android:textSize="14sp" />
+    <!-- Events fetched from Firestore -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerOrganizerEvents"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
+        app:layout_constraintTop_toBottomOf="@id/btnAddOrganizerEvent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        </LinearLayout>
-
-    </FrameLayout>
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

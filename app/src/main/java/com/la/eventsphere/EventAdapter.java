@@ -1,6 +1,7 @@
 package com.la.eventsphere;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,19 +18,21 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class EventAdapter
         extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
 
     private final List<Event> eventList;
-
     private final FirebaseFirestore db;
     private final FirebaseAuth mAuth;
 
+    private static final int PURPLE = Color.rgb(80, 51, 216);
+    private static final int GREY = Color.rgb(158, 158, 158);
+
     public EventAdapter(List<Event> eventList) {
         this.eventList = eventList;
-
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
     }
@@ -53,265 +56,182 @@ public class EventAdapter
 
         Event event = eventList.get(position);
 
-        // -----------------------------
-        // EVENT INFORMATION
-        // -----------------------------
-
+        // Dynamically display event details from Firestore data
         holder.tvEventCategory.setText(
-                event.getCategory() != null
-                        ? event.getCategory()
-                        : ""
-        );
+                nonEmpty(event.getCategory(), "Event"));
 
         holder.tvEventTitle.setText(
-                event.getTitle() != null
-                        ? event.getTitle()
-                        : ""
-        );
+                nonEmpty(event.getTitle(), "Untitled event"));
 
         holder.tvEventDate.setText(
-                event.getDate() != null
-                        ? "📅 " + event.getDate()
-                        : ""
-        );
+                "📅  " + nonEmpty(event.getDate(), "Date to be announced"));
 
         holder.tvEventTime.setText(
-                event.getTime() != null
-                        ? "🕐 " + event.getTime()
-                        : ""
-        );
+                "🕐  " + nonEmpty(event.getTime(), "Time to be announced"));
 
         holder.tvEventVenue.setText(
-                event.getVenue() != null
-                        ? "📍 " + event.getVenue()
-                        : ""
-        );
+                "📍  " + nonEmpty(event.getVenue(), "Venue to be announced"));
 
         holder.tvEventCity.setText(
-                event.getCity() != null
-                        ? event.getCity()
-                        : ""
-        );
+                nonEmpty(event.getCity(), ""));
 
-        holder.tvOrganizerName.setText(
-                event.getOrganizerName() != null
-                        ? "By " + event.getOrganizerName()
-                        : ""
-        );
+        String organizer = nonEmpty(
+                event.getOrganizerName(), "Event Organizer");
 
+        holder.tvOrganizerName.setText("By " + organizer);
 
-        // -----------------------------
-        // OPEN EVENT DETAILS
-        // -----------------------------
+        holder.tvOrganizerInitial.setText(
+                organizer.substring(0, 1)
+                        .toUpperCase(Locale.getDefault()));
 
+        // Open event details
         holder.itemView.setOnClickListener(v -> {
+            String eventId = event.getEventId();
+
+            if (eventId == null || eventId.isEmpty()) {
+                Toast.makeText(v.getContext(),
+                        "Unable to open event details.",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             Intent intent = new Intent(
-                    v.getContext(),
-                    EventDetailsActivity.class
-            );
+                    v.getContext(), EventDetailsActivity.class);
 
-            intent.putExtra(
-                    "eventId",
-                    event.getEventId()
-            );
-
+            intent.putExtra("eventId", eventId);
             v.getContext().startActivity(intent);
         });
 
-
-        // -----------------------------
-        // CHECK SAVED STATUS
-        // -----------------------------
-
+        // Show the correct star for this event
         checkSavedStatus(holder, event);
 
-
-        // -----------------------------
-        // SAVE / UNSAVE EVENT
-        // -----------------------------
-
+        // Save or unsave when the star is tapped
         holder.ivSave.setOnClickListener(v -> {
-
             FirebaseUser currentUser = mAuth.getCurrentUser();
 
             if (currentUser == null) {
-
-                Toast.makeText(
-                        v.getContext(),
+                Toast.makeText(v.getContext(),
                         "Please login to save events.",
-                        Toast.LENGTH_SHORT
-                ).show();
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
 
+            String eventId = event.getEventId();
+
+            if (eventId == null || eventId.isEmpty()) {
+                Toast.makeText(v.getContext(),
+                        "Unable to save this event.",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
             String uid = currentUser.getUid();
-            String eventId = event.getEventId();
 
-            if (eventId == null || eventId.isEmpty()) {
-
-                Toast.makeText(
-                        v.getContext(),
-                        "Unable to save this event.",
-                        Toast.LENGTH_SHORT
-                ).show();
-
-                return;
-            }
+            holder.ivSave.setEnabled(false);
 
             db.collection("users")
                     .document(uid)
                     .collection("savedEvents")
                     .document(eventId)
                     .get()
-                    .addOnSuccessListener(documentSnapshot -> {
+                    .addOnSuccessListener(snapshot -> {
 
-                        if (documentSnapshot.exists()) {
-
-                            // -----------------------------
+                        if (snapshot.exists()) {
                             // UNSAVE EVENT
-                            // -----------------------------
-
                             db.collection("users")
                                     .document(uid)
                                     .collection("savedEvents")
                                     .document(eventId)
                                     .delete()
-                                    .addOnSuccessListener(aVoid -> {
+                                    .addOnSuccessListener(unused -> {
+                                        setStar(holder.ivSave, false);
 
-                                        holder.ivSave.setImageResource(
-                                                android.R.drawable.btn_star_big_off
-                                        );
-
-                                        Toast.makeText(
-                                                v.getContext(),
+                                        Toast.makeText(v.getContext(),
                                                 "Event removed from saved.",
-                                                Toast.LENGTH_SHORT
-                                        ).show();
-
+                                                Toast.LENGTH_SHORT).show();
                                     })
-                                    .addOnFailureListener(e -> {
-
-                                        Toast.makeText(
-                                                v.getContext(),
-                                                "Unable to remove saved event.",
-                                                Toast.LENGTH_SHORT
-                                        ).show();
-
-                                    });
+                                    .addOnFailureListener(e ->
+                                            Toast.makeText(v.getContext(),
+                                                    "Unable to remove saved event.",
+                                                    Toast.LENGTH_SHORT).show()
+                                    )
+                                    .addOnCompleteListener(task ->
+                                            holder.ivSave.setEnabled(true));
 
                         } else {
-
-                            // -----------------------------
                             // SAVE EVENT
-                            // -----------------------------
-
                             Map<String, Object> savedEvent =
                                     new HashMap<>();
 
-                            savedEvent.put(
-                                    "eventId",
-                                    event.getEventId()
-                            );
-
-                            savedEvent.put(
-                                    "title",
-                                    event.getTitle()
-                            );
-
-                            savedEvent.put(
-                                    "category",
-                                    event.getCategory()
-                            );
-
-                            savedEvent.put(
-                                    "date",
-                                    event.getDate()
-                            );
-
-                            savedEvent.put(
-                                    "time",
-                                    event.getTime()
-                            );
-
-                            savedEvent.put(
-                                    "venue",
-                                    event.getVenue()
-                            );
-
-                            savedEvent.put(
-                                    "city",
-                                    event.getCity()
-                            );
-
+                            savedEvent.put("eventId", eventId);
+                            savedEvent.put("title", event.getTitle());
+                            savedEvent.put("category", event.getCategory());
+                            savedEvent.put("date", event.getDate());
+                            savedEvent.put("time", event.getTime());
+                            savedEvent.put("venue", event.getVenue());
+                            savedEvent.put("city", event.getCity());
                             savedEvent.put(
                                     "organizerName",
-                                    event.getOrganizerName()
-                            );
-
+                                    event.getOrganizerName());
 
                             db.collection("users")
                                     .document(uid)
                                     .collection("savedEvents")
                                     .document(eventId)
                                     .set(savedEvent)
-                                    .addOnSuccessListener(aVoid -> {
+                                    .addOnSuccessListener(unused -> {
+                                        setStar(holder.ivSave, true);
 
-                                        holder.ivSave.setImageResource(
-                                                android.R.drawable.btn_star_big_on
-                                        );
-
-                                        Toast.makeText(
-                                                v.getContext(),
+                                        Toast.makeText(v.getContext(),
                                                 "Event saved!",
-                                                Toast.LENGTH_SHORT
-                                        ).show();
-
+                                                Toast.LENGTH_SHORT).show();
                                     })
-                                    .addOnFailureListener(e -> {
-
-                                        Toast.makeText(
-                                                v.getContext(),
-                                                "Unable to save event.",
-                                                Toast.LENGTH_SHORT
-                                        ).show();
-
-                                    });
+                                    .addOnFailureListener(e ->
+                                            Toast.makeText(v.getContext(),
+                                                    "Unable to save event.",
+                                                    Toast.LENGTH_SHORT).show()
+                                    )
+                                    .addOnCompleteListener(task ->
+                                            holder.ivSave.setEnabled(true));
                         }
-
                     })
                     .addOnFailureListener(e -> {
+                        holder.ivSave.setEnabled(true);
 
-                        Toast.makeText(
-                                v.getContext(),
+                        Toast.makeText(v.getContext(),
                                 "Unable to check saved event.",
-                                Toast.LENGTH_SHORT
-                        ).show();
-
+                                Toast.LENGTH_SHORT).show();
                     });
         });
     }
 
+    // Change the star appearance
+    private void setStar(ImageView imageView, boolean isSaved) {
+        imageView.setImageResource(
+                isSaved
+                        ? android.R.drawable.btn_star_big_on
+                        : android.R.drawable.btn_star_big_off
+        );
 
-    // =========================================================
-    // CHECK WHETHER EVENT IS ALREADY SAVED
-    // =========================================================
+        imageView.setColorFilter(isSaved ? PURPLE : GREY);
+        imageView.setContentDescription(
+                isSaved ? "Unsave event" : "Save event");
+    }
 
+    // Read the saved state from Firestore
     private void checkSavedStatus(
             EventViewHolder holder,
             Event event) {
 
+        // Always reset recycled cards first
+        setStar(holder.ivSave, false);
+
         FirebaseUser currentUser = mAuth.getCurrentUser();
+        String eventId = event.getEventId();
 
         if (currentUser == null ||
-                event.getEventId() == null ||
-                event.getEventId().isEmpty()) {
-
-            holder.ivSave.setImageResource(
-                    android.R.drawable.btn_star_big_off
-            );
-
+                eventId == null ||
+                eventId.isEmpty()) {
             return;
         }
 
@@ -320,45 +240,43 @@ public class EventAdapter
         db.collection("users")
                 .document(uid)
                 .collection("savedEvents")
-                .document(event.getEventId())
+                .document(eventId)
                 .get()
-                .addOnSuccessListener(documentSnapshot -> {
+                .addOnSuccessListener(snapshot -> {
 
-                    if (documentSnapshot.exists()) {
+                    int currentPosition =
+                            holder.getBindingAdapterPosition();
 
-                        holder.ivSave.setImageResource(
-                                android.R.drawable.btn_star_big_on
-                        );
-
-                    } else {
-
-                        holder.ivSave.setImageResource(
-                                android.R.drawable.btn_star_big_off
-                        );
+                    if (currentPosition == RecyclerView.NO_POSITION
+                            || currentPosition >= eventList.size()) {
+                        return;
                     }
 
+                    Event currentEvent = eventList.get(currentPosition);
+
+                    // Make sure this holder still represents the same event
+                    if (!eventId.equals(currentEvent.getEventId())) {
+                        return;
+                    }
+
+                    setStar(holder.ivSave, snapshot.exists());
                 });
     }
 
-
-    // =========================================================
-    // ITEM COUNT
-    // =========================================================
+    private String nonEmpty(String value, String fallback) {
+        return value == null || value.trim().isEmpty()
+                ? fallback
+                : value.trim();
+    }
 
     @Override
     public int getItemCount() {
-        return eventList.size();
+        return eventList == null ? 0 : eventList.size();
     }
-
-
-    // =========================================================
-    // VIEW HOLDER
-    // =========================================================
 
     public static class EventViewHolder
             extends RecyclerView.ViewHolder {
 
-        ImageView ivEventImage;
         ImageView ivSave;
 
         TextView tvEventCategory;
@@ -368,17 +286,12 @@ public class EventAdapter
         TextView tvEventVenue;
         TextView tvEventCity;
         TextView tvOrganizerName;
-
+        TextView tvOrganizerInitial;
 
         public EventViewHolder(@NonNull View itemView) {
-
             super(itemView);
 
-            ivEventImage =
-                    itemView.findViewById(R.id.ivEventImage);
-
-            ivSave =
-                    itemView.findViewById(R.id.ivSave);
+            ivSave = itemView.findViewById(R.id.ivSave);
 
             tvEventCategory =
                     itemView.findViewById(R.id.tvEventCategory);
@@ -400,6 +313,9 @@ public class EventAdapter
 
             tvOrganizerName =
                     itemView.findViewById(R.id.tvOrganizerName);
+
+            tvOrganizerInitial =
+                    itemView.findViewById(R.id.tvOrganizerInitial);
         }
     }
 }

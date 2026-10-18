@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F8F7FC"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:overScrollMode="never">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -11,207 +12,295 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- Back Button -->
         <TextView
             android:id="@+id/btnCreateEventBack"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="6dp"
+            android:paddingTop="8dp"
             android:paddingBottom="12dp"
             android:text="← Back"
             android:textColor="#5033D8"
-            android:textSize="16sp" />
+            android:textSize="15sp"
+            android:clickable="true"
+            android:focusable="true" />
 
+        <!-- Heading -->
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Create New Event"
             android:textColor="#25213A"
-            android:textSize="26sp"
+            android:textSize="25sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
+            android:layout_marginBottom="22dp"
             android:text="Share your event with the EventSphere community."
             android:textColor="#777386"
             android:textSize="14sp" />
 
+        <!-- Form Container -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:background="#FFFFFF"
-            android:elevation="2dp"
             android:orientation="vertical"
-            android:padding="18dp">
+            android:padding="14dp"
+            android:background="#FFFFFF">
 
+            <!-- Event Title -->
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Event title *"
-                android:textColor="#25213A"
-                android:textStyle="bold" />
+                android:textColor="#303030"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
 
             <EditText
                 android:id="@+id/etCreateEventTitle"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_marginTop="6dp"
                 android:background="@drawable/organizer_input_bg"
                 android:hint="Enter event name"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="#202124"
+                android:textColorHint="#999999"
+                android:textSize="14sp"
                 android:inputType="textCapSentences"
-                android:paddingHorizontal="12dp"
-                android:singleLine="true"
-                android:textColor="#25213A"
-                android:textColorHint="#9994A8" />
+                android:singleLine="true" />
 
+            <!-- Category -->
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
+                android:layout_marginBottom="8dp"
                 android:text="Category *"
-                android:textColor="#25213A"
+                android:textColor="#303030"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <Spinner
                 android:id="@+id/spCreateEventCategory"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_marginTop="6dp"
                 android:background="@drawable/organizer_input_bg"
-                android:paddingHorizontal="8dp" />
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:spinnerMode="dropdown" />
 
+            <!-- Event Image -->
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
+                android:layout_marginBottom="8dp"
+                android:text="Event Image"
+                android:textColor="#303030"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:text="Add a poster or photo to make your event stand out."
+                android:textColor="#777386"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:background="@drawable/organizer_input_bg">
+
+                <ImageView
+                    android:id="@+id/ivCreateEventImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:background="#F0EDFF"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Selected event image preview"
+                    android:src="@android:drawable/ic_menu_gallery" />
+
+                <Button
+                    android:id="@+id/btnChooseEventImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="10dp"
+                    android:backgroundTint="#5033D8"
+                    android:text="Choose Event Image"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <!-- Event Date -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:layout_marginBottom="8dp"
                 android:text="Event date *"
-                android:textColor="#25213A"
+                android:textColor="#303030"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/etCreateEventDate"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_marginTop="6dp"
                 android:background="@drawable/organizer_input_bg"
-                android:clickable="true"
-                android:focusable="false"
                 android:hint="Select event date"
-                android:paddingHorizontal="12dp"
-                android:textColor="#25213A"
-                android:textColorHint="#9994A8" />
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="#202124"
+                android:textColorHint="#999999"
+                android:textSize="14sp"
+                android:focusable="false"
+                android:clickable="true"
+                android:singleLine="true" />
 
+            <!-- Event Time -->
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
+                android:layout_marginBottom="8dp"
                 android:text="Event time *"
-                android:textColor="#25213A"
+                android:textColor="#303030"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/etCreateEventTime"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_marginTop="6dp"
                 android:background="@drawable/organizer_input_bg"
-                android:clickable="true"
-                android:focusable="false"
                 android:hint="Select event time"
-                android:paddingHorizontal="12dp"
-                android:textColor="#25213A"
-                android:textColorHint="#9994A8" />
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="#202124"
+                android:textColorHint="#999999"
+                android:textSize="14sp"
+                android:focusable="false"
+                android:clickable="true"
+                android:singleLine="true" />
 
+            <!-- Venue -->
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
+                android:layout_marginBottom="8dp"
                 android:text="Venue *"
-                android:textColor="#25213A"
+                android:textColor="#303030"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/etCreateEventVenue"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_marginTop="6dp"
                 android:background="@drawable/organizer_input_bg"
                 android:hint="College auditorium, hotel, etc."
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="#202124"
+                android:textColorHint="#999999"
+                android:textSize="14sp"
                 android:inputType="textCapSentences"
-                android:paddingHorizontal="12dp"
-                android:singleLine="true"
-                android:textColor="#25213A"
-                android:textColorHint="#9994A8" />
+                android:singleLine="true" />
 
+            <!-- City -->
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
+                android:layout_marginBottom="8dp"
                 android:text="City *"
-                android:textColor="#25213A"
+                android:textColor="#303030"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/etCreateEventCity"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_marginTop="6dp"
                 android:background="@drawable/organizer_input_bg"
                 android:hint="Enter city"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="#202124"
+                android:textColorHint="#999999"
+                android:textSize="14sp"
                 android:inputType="textCapWords"
-                android:paddingHorizontal="12dp"
-                android:singleLine="true"
-                android:textColor="#25213A"
-                android:textColorHint="#9994A8" />
+                android:singleLine="true" />
 
+            <!-- Organizer Name -->
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:text="Organizer name *"
-                android:textColor="#25213A"
+                android:layout_marginBottom="8dp"
+                android:text="Organizer / Organization Name *"
+                android:textColor="#303030"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/etCreateOrganizerName"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_marginTop="6dp"
                 android:background="@drawable/organizer_input_bg"
-                android:hint="Club or organizer name"
+                android:hint="Enter organizer name"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="#202124"
+                android:textColorHint="#999999"
+                android:textSize="14sp"
                 android:inputType="textCapWords"
-                android:paddingHorizontal="12dp"
-                android:singleLine="true"
-                android:textColor="#25213A"
-                android:textColorHint="#9994A8" />
+                android:singleLine="true" />
 
+            <!-- Event Description -->
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:text="Description *"
-                android:textColor="#25213A"
+                android:layout_marginBottom="8dp"
+                android:text="Event description *"
+                android:textColor="#303030"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/etCreateEventDescription"
                 android:layout_width="match_parent"
                 android:layout_height="120dp"
-                android:layout_marginTop="6dp"
                 android:background="@drawable/organizer_input_bg"
+                android:hint="Describe your event, activities and other details..."
                 android:gravity="top|start"
-                android:hint="Describe the event, activities and important details"
-                android:inputType="textCapSentences|textMultiLine"
                 android:padding="12dp"
-                android:textColor="#25213A"
-                android:textColorHint="#9994A8" />
+                android:textColor="#202124"
+                android:textColorHint="#999999"
+                android:textSize="14sp"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minLines="4"
+                android:maxLines="6" />
 
+            <!-- Registration Required -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="20dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -224,15 +313,16 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Registration required"
-                        android:textColor="#25213A"
+                        android:text="Registration Required"
+                        android:textColor="#303030"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Allow users to register through the app"
+                        android:text="Attendees need to register for this event."
                         android:textColor="#777386"
                         android:textSize="12sp" />
 
@@ -242,16 +332,16 @@
                     android:id="@+id/switchRegistrationRequired"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:contentDescription="Registration required" />
+                    android:checked="true" />
 
             </LinearLayout>
 
+            <!-- Publish Event -->
             <Button
                 android:id="@+id/btnPublishEvent"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
-                android:layout_marginTop="26dp"
+                android:layout_marginTop="28dp"
                 android:backgroundTint="#5033D8"
                 android:text="Publish Event"
                 android:textAllCaps="false"
@@ -261,14 +351,15 @@
 
         </LinearLayout>
 
+        <!-- Footer -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:layout_marginBottom="16dp"
             android:gravity="center"
-            android:text="* Required fields"
-            android:textColor="#777386"
+            android:text="EventSphere • Organizer Portal"
+            android:textColor="#9994A8"
             android:textSize="12sp" />
 
     </LinearLayout>

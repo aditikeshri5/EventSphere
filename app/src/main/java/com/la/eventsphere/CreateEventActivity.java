@@ -1,4 +1,3 @@
-
 package com.la.eventsphere;
 
 import android.app.DatePickerDialog;
@@ -38,6 +37,8 @@ public class CreateEventActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
+    private String organizerUid;
+
     private final String[] categories = {
             "Music",
             "Sports",
@@ -64,10 +65,25 @@ public class CreateEventActivity extends AppCompatActivity {
         setupDatePicker();
         setupTimePicker();
 
-        findViewById(R.id.btnCreateEventBack).setOnClickListener(v -> finish());
-        btnPublish.setOnClickListener(v -> publishEvent());
+        FirebaseUser user = mAuth.getCurrentUser();
 
+        if (user == null) {
+            Toast.makeText(
+                    this,
+                    "Please log in again to create an event.",
+                    Toast.LENGTH_LONG
+            ).show();
+            finish();
+            return;
+        }
+
+        organizerUid = user.getUid();
         loadOrganizerName();
+
+        TextView btnBack = findViewById(R.id.btnCreateEventBack);
+        btnBack.setOnClickListener(v -> finish());
+
+        btnPublish.setOnClickListener(v -> publishEvent());
     }
 
     private void initializeViews() {
@@ -80,8 +96,10 @@ public class CreateEventActivity extends AppCompatActivity {
         etDescription = findViewById(R.id.etCreateEventDescription);
 
         spCategory = findViewById(R.id.spCreateEventCategory);
+
         switchRegistrationRequired =
                 findViewById(R.id.switchRegistrationRequired);
+
         btnPublish = findViewById(R.id.btnPublishEvent);
     }
 
@@ -110,9 +128,15 @@ public class CreateEventActivity extends AppCompatActivity {
                         selected.set(year, month, day);
 
                         SimpleDateFormat formatter =
-                                new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                                new SimpleDateFormat(
+                                        "yyyy-MM-dd",
+                                        Locale.US
+                                );
 
-                        etDate.setText(formatter.format(selected.getTime()));
+                        etDate.setText(
+                                formatter.format(selected.getTime())
+                        );
+                        etDate.setError(null);
                     },
                     calendar.get(Calendar.YEAR),
                     calendar.get(Calendar.MONTH),
@@ -127,6 +151,7 @@ public class CreateEventActivity extends AppCompatActivity {
         };
 
         etDate.setOnClickListener(listener);
+        etDate.setFocusable(false);
     }
 
     private void setupTimePicker() {
@@ -141,9 +166,15 @@ public class CreateEventActivity extends AppCompatActivity {
                         selected.set(Calendar.MINUTE, minute);
 
                         SimpleDateFormat formatter =
-                                new SimpleDateFormat("hh:mm a", Locale.getDefault());
+                                new SimpleDateFormat(
+                                        "hh:mm a",
+                                        Locale.getDefault()
+                                );
 
-                        etTime.setText(formatter.format(selected.getTime()));
+                        etTime.setText(
+                                formatter.format(selected.getTime())
+                        );
+                        etTime.setError(null);
                     },
                     calendar.get(Calendar.HOUR_OF_DAY),
                     calendar.get(Calendar.MINUTE),
@@ -152,27 +183,40 @@ public class CreateEventActivity extends AppCompatActivity {
 
             dialog.show();
         });
+
+        etTime.setFocusable(false);
     }
 
     private void loadOrganizerName() {
-        FirebaseUser user = mAuth.getCurrentUser();
-
-        if (user == null) {
-            return;
-        }
-
         db.collection("organizers")
-                .document(user.getUid())
+                .document(organizerUid)
                 .get()
                 .addOnSuccessListener(document -> {
                     if (document.exists()) {
                         String name = document.getString("name");
 
                         if (name != null && !name.trim().isEmpty()) {
-                            etOrganizerName.setText(name);
+                            etOrganizerName.setText(name.trim());
+                        } else {
+                            String organization =
+                                    document.getString("organization");
+
+                            if (organization != null
+                                    && !organization.trim().isEmpty()) {
+                                etOrganizerName.setText(
+                                        organization.trim()
+                                );
+                            }
                         }
                     }
-                });
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(
+                                CreateEventActivity.this,
+                                "Could not load organizer profile.",
+                                Toast.LENGTH_SHORT
+                        ).show()
+                );
     }
 
     private void publishEvent() {
@@ -189,17 +233,31 @@ public class CreateEventActivity extends AppCompatActivity {
         }
 
         String title = etTitle.getText().toString().trim();
-        String category = spCategory.getSelectedItem().toString();
+        String category = spCategory.getSelectedItem() == null
+                ? ""
+                : spCategory.getSelectedItem().toString();
+
         String date = etDate.getText().toString().trim();
         String time = etTime.getText().toString().trim();
         String venue = etVenue.getText().toString().trim();
         String city = etCity.getText().toString().trim();
-        String organizerName = etOrganizerName.getText().toString().trim();
-        String description = etDescription.getText().toString().trim();
+        String organizerName =
+                etOrganizerName.getText().toString().trim();
+        String description =
+                etDescription.getText().toString().trim();
 
         if (title.isEmpty()) {
             etTitle.setError("Enter the event title");
             etTitle.requestFocus();
+            return;
+        }
+
+        if (category.isEmpty()) {
+            Toast.makeText(
+                    this,
+                    "Select an event category.",
+                    Toast.LENGTH_SHORT
+            ).show();
             return;
         }
 
@@ -250,18 +308,21 @@ public class CreateEventActivity extends AppCompatActivity {
         event.put("time", time);
         event.put("venue", venue);
         event.put("city", city);
-        event.put("organizerName", organizerName);
         event.put("description", description);
-        event.put("registrationRequired",
-                switchRegistrationRequired.isChecked());
 
-        // Ownership: used to show this event only in its organizer's dashboard.
-        event.put("organizerId", user.getUid());
+        // Match the field names used in your Firestore structure.
+        event.put("imageURL", "");
 
-        // Useful for ordering and future dashboard features.
+        // IMPORTANT: Use the exact capitalization from your schema.
+        event.put("organizerID", user.getUid());
+        event.put("organizerName", organizerName);
+
+        event.put(
+                "registrationRequired",
+                switchRegistrationRequired.isChecked()
+        );
+
         event.put("createdAt", FieldValue.serverTimestamp());
-
-        // Initial count for future registration-count features.
         event.put("registeredCount", 0);
 
         db.collection("events")
@@ -273,6 +334,7 @@ public class CreateEventActivity extends AppCompatActivity {
                             Toast.LENGTH_LONG
                     ).show();
 
+                    setResult(RESULT_OK);
                     finish();
                 })
                 .addOnFailureListener(e -> {
@@ -281,7 +343,8 @@ public class CreateEventActivity extends AppCompatActivity {
 
                     Toast.makeText(
                             CreateEventActivity.this,
-                            "Could not publish event. Please check your connection and Firestore permissions.",
+                            "Event could not be published: "
+                                    + e.getLocalizedMessage(),
                             Toast.LENGTH_LONG
                     ).show();
                 });
