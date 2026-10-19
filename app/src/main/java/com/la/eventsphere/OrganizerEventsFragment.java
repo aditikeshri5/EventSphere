@@ -1,4 +1,3 @@
-
 package com.la.eventsphere;
 
 import android.content.Intent;
@@ -55,7 +54,8 @@ public class OrganizerEventsFragment extends Fragment {
         layoutNoEvents = view.findViewById(R.id.layoutNoOrganizerEvents);
         tvEventsCount = view.findViewById(R.id.tvOrganizerEventsCount);
 
-        recyclerEvents.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerEvents.setLayoutManager(
+                new LinearLayoutManager(requireContext()));
 
         adapter = new OrganizerEventAdapter(eventList);
         recyclerEvents.setAdapter(adapter);
@@ -83,6 +83,7 @@ public class OrganizerEventsFragment extends Fragment {
     }
 
     private void loadOrganizerEvents() {
+
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user == null) {
@@ -92,21 +93,21 @@ public class OrganizerEventsFragment extends Fragment {
 
         String organizerId = user.getUid();
 
+        // IMPORTANT: Firestore field is organizerID, not organizerId.
         eventsListener = db.collection("events")
-                .whereEqualTo("organizerId", organizerId)
+                .whereEqualTo("organizerID", organizerId)
                 .addSnapshotListener((snapshot, error) -> {
 
-                    if (!isAdded()) {
+                    if (!isAdded() || recyclerEvents == null) {
                         return;
                     }
 
                     if (error != null) {
                         Toast.makeText(
                                 requireContext(),
-                                "Unable to load your events. Check your connection and access.",
+                                "Unable to load events: " + error.getMessage(),
                                 Toast.LENGTH_LONG
                         ).show();
-
                         return;
                     }
 
@@ -114,9 +115,10 @@ public class OrganizerEventsFragment extends Fragment {
 
                     if (snapshot != null) {
                         for (QueryDocumentSnapshot document : snapshot) {
+
                             Event event = document.toObject(Event.class);
 
-                            // Use the Firestore document ID as the event ID.
+                            // Store the actual Firestore document ID.
                             event.setEventId(document.getId());
 
                             eventList.add(event);
@@ -139,6 +141,7 @@ public class OrganizerEventsFragment extends Fragment {
     }
 
     private void showEmptyState() {
+
         if (recyclerEvents != null && layoutNoEvents != null) {
             recyclerEvents.setVisibility(View.GONE);
             layoutNoEvents.setVisibility(View.VISIBLE);
@@ -147,14 +150,6 @@ public class OrganizerEventsFragment extends Fragment {
         if (tvEventsCount != null) {
             tvEventsCount.setText("Your events (0)");
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        // Firestore's listener updates the list automatically.
-        // This also handles returning from Create/Edit Event.
     }
 
     @Override

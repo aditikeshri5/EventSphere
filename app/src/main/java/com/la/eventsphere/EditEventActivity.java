@@ -1,10 +1,8 @@
-
 package com.la.eventsphere;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,7 +14,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -60,19 +60,29 @@ public class EditEventActivity extends AppCompatActivity {
 
         eventId = getIntent().getStringExtra("eventId");
 
-        findViewById(R.id.btnEditEventBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnEditEventBack)
+                .setOnClickListener(v -> finish());
+
         btnUpdate.setOnClickListener(v -> updateEvent());
 
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user == null) {
-            Toast.makeText(this, "Please log in again.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    this,
+                    "Please log in again.",
+                    Toast.LENGTH_LONG
+            ).show();
             finish();
             return;
         }
 
         if (eventId == null || eventId.trim().isEmpty()) {
-            Toast.makeText(this, "Event ID is missing.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    this,
+                    "Event ID is missing.",
+                    Toast.LENGTH_LONG
+            ).show();
             finish();
             return;
         }
@@ -91,8 +101,10 @@ public class EditEventActivity extends AppCompatActivity {
         etDescription = findViewById(R.id.etEditEventDescription);
 
         spCategory = findViewById(R.id.spEditEventCategory);
+
         switchRegistrationRequired =
                 findViewById(R.id.switchEditRegistrationRequired);
+
         btnUpdate = findViewById(R.id.btnUpdateEvent);
     }
 
@@ -102,9 +114,11 @@ public class EditEventActivity extends AppCompatActivity {
                 android.R.layout.simple_spinner_item,
                 categories
         );
+
         adapter.setDropDownViewResource(
                 android.R.layout.simple_spinner_dropdown_item
         );
+
         spCategory.setAdapter(adapter);
     }
 
@@ -113,23 +127,36 @@ public class EditEventActivity extends AppCompatActivity {
             Calendar calendar = Calendar.getInstance();
 
             String current = etDate.getText().toString().trim();
+
             try {
                 Calendar existing = Calendar.getInstance();
-                existing.setTime(new SimpleDateFormat(
-                        "yyyy-MM-dd", Locale.US).parse(current));
+
+                existing.setTime(
+                        new SimpleDateFormat(
+                                "yyyy-MM-dd",
+                                Locale.US
+                        ).parse(current)
+                );
+
                 calendar = existing;
+
             } catch (Exception ignored) {
-                // Use today's date when no valid date is set.
+                // Use today's date if no valid date is selected.
             }
 
             DatePickerDialog dialog = new DatePickerDialog(
                     this,
                     (picker, year, month, day) -> {
                         Calendar selected = Calendar.getInstance();
+
                         selected.set(year, month, day);
-                        etDate.setText(new SimpleDateFormat(
-                                "yyyy-MM-dd", Locale.US
-                        ).format(selected.getTime()));
+
+                        etDate.setText(
+                                new SimpleDateFormat(
+                                        "yyyy-MM-dd",
+                                        Locale.US
+                                ).format(selected.getTime())
+                        );
                     },
                     calendar.get(Calendar.YEAR),
                     calendar.get(Calendar.MONTH),
@@ -139,6 +166,7 @@ public class EditEventActivity extends AppCompatActivity {
             dialog.getDatePicker().setMinDate(
                     System.currentTimeMillis() - 1000
             );
+
             dialog.show();
         });
     }
@@ -148,23 +176,33 @@ public class EditEventActivity extends AppCompatActivity {
             Calendar calendar = Calendar.getInstance();
 
             try {
-                calendar.setTime(new SimpleDateFormat(
-                        "hh:mm a", Locale.getDefault()
-                ).parse(etTime.getText().toString().trim()));
+                calendar.setTime(
+                        new SimpleDateFormat(
+                                "hh:mm a",
+                                Locale.getDefault()
+                        ).parse(
+                                etTime.getText().toString().trim()
+                        )
+                );
+
             } catch (Exception ignored) {
-                // Use the current time if no valid time is set.
+                // Use the current time if no valid time is selected.
             }
 
             new TimePickerDialog(
                     this,
                     (picker, hour, minute) -> {
                         Calendar selected = Calendar.getInstance();
+
                         selected.set(Calendar.HOUR_OF_DAY, hour);
                         selected.set(Calendar.MINUTE, minute);
 
-                        etTime.setText(new SimpleDateFormat(
-                                "hh:mm a", Locale.getDefault()
-                        ).format(selected.getTime()));
+                        etTime.setText(
+                                new SimpleDateFormat(
+                                        "hh:mm a",
+                                        Locale.getDefault()
+                                ).format(selected.getTime())
+                        );
                     },
                     calendar.get(Calendar.HOUR_OF_DAY),
                     calendar.get(Calendar.MINUTE),
@@ -174,17 +212,28 @@ public class EditEventActivity extends AppCompatActivity {
     }
 
     private void loadEvent(String uid) {
-        db.collection("events").document(eventId).get()
+        db.collection("events")
+                .document(eventId)
+                .get()
                 .addOnSuccessListener(document -> {
-                    if (isFinishing() || isDestroyed()) return;
+
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
 
                     if (!document.exists()) {
-                        Toast.makeText(this, "Event not found.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(
+                                this,
+                                "Event not found.",
+                                Toast.LENGTH_LONG
+                        ).show();
+
                         finish();
                         return;
                     }
 
-                    String ownerId = document.getString("organizerId");
+                    // Verify that the current organizer owns this event.
+                    String ownerId = document.getString("organizerID");
 
                     if (ownerId == null || !ownerId.equals(uid)) {
                         Toast.makeText(
@@ -192,25 +241,38 @@ public class EditEventActivity extends AppCompatActivity {
                                 "You do not have permission to edit this event.",
                                 Toast.LENGTH_LONG
                         ).show();
+
                         finish();
                         return;
                     }
 
+                    // Load existing event details into the form.
                     etTitle.setText(document.getString("title"));
                     etDate.setText(document.getString("date"));
                     etTime.setText(document.getString("time"));
                     etVenue.setText(document.getString("venue"));
                     etCity.setText(document.getString("city"));
-                    etOrganizerName.setText(document.getString("organizerName"));
-                    etDescription.setText(document.getString("description"));
+
+                    etOrganizerName.setText(
+                            document.getString("organizerName")
+                    );
+
+                    etDescription.setText(
+                            document.getString("description")
+                    );
 
                     String category = document.getString("category");
-                    int index = Arrays.asList(categories).indexOf(category);
+
+                    int index = Arrays.asList(categories)
+                            .indexOf(category);
+
                     if (index >= 0) {
                         spCategory.setSelection(index);
                     }
 
-                    Boolean required = document.getBoolean("registrationRequired");
+                    Boolean required =
+                            document.getBoolean("registrationRequired");
+
                     switchRegistrationRequired.setChecked(
                             required == null || required
                     );
@@ -219,25 +281,39 @@ public class EditEventActivity extends AppCompatActivity {
                     btnUpdate.setEnabled(true);
                 })
                 .addOnFailureListener(e -> {
+
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+
                     Toast.makeText(
                             this,
-                            "Unable to load event details.",
+                            "Unable to load event details: "
+                                    + e.getMessage(),
                             Toast.LENGTH_LONG
                     ).show();
-                    finish();
                 });
     }
 
     private void updateEvent() {
         if (!eventLoaded) {
-            Toast.makeText(this, "Event details are still loading.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                    this,
+                    "Event details are still loading.",
+                    Toast.LENGTH_SHORT
+            ).show();
             return;
         }
 
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user == null) {
-            Toast.makeText(this, "Please log in again.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    this,
+                    "Please log in again.",
+                    Toast.LENGTH_LONG
+            ).show();
+
             finish();
             return;
         }
@@ -247,53 +323,160 @@ public class EditEventActivity extends AppCompatActivity {
         String time = etTime.getText().toString().trim();
         String venue = etVenue.getText().toString().trim();
         String city = etCity.getText().toString().trim();
-        String organizerName = etOrganizerName.getText().toString().trim();
-        String description = etDescription.getText().toString().trim();
 
-        if (title.isEmpty() || date.isEmpty() || time.isEmpty()
-                || venue.isEmpty() || city.isEmpty()
-                || organizerName.isEmpty() || description.isEmpty()) {
+        String organizerName =
+                etOrganizerName.getText().toString().trim();
+
+        String description =
+                etDescription.getText().toString().trim();
+
+        if (title.isEmpty()
+                || date.isEmpty()
+                || time.isEmpty()
+                || venue.isEmpty()
+                || city.isEmpty()
+                || organizerName.isEmpty()
+                || description.isEmpty()) {
+
             Toast.makeText(
                     this,
                     "Please complete all required fields.",
                     Toast.LENGTH_LONG
             ).show();
+
             return;
         }
 
         btnUpdate.setEnabled(false);
         btnUpdate.setText("Saving...");
 
+        String category = spCategory.getSelectedItem().toString();
+
         Map<String, Object> updates = new HashMap<>();
+
         updates.put("title", title);
-        updates.put("category", spCategory.getSelectedItem().toString());
+        updates.put("category", category);
         updates.put("date", date);
         updates.put("time", time);
         updates.put("venue", venue);
         updates.put("city", city);
         updates.put("organizerName", organizerName);
         updates.put("description", description);
-        updates.put("registrationRequired",
-                switchRegistrationRequired.isChecked());
+        updates.put(
+                "registrationRequired",
+                switchRegistrationRequired.isChecked()
+        );
 
-        db.collection("events").document(eventId)
+        // Step 1: Update the main event document.
+        db.collection("events")
+                .document(eventId)
                 .update(updates)
                 .addOnSuccessListener(unused -> {
-                    Toast.makeText(
-                            this,
-                            "Event updated successfully!",
-                            Toast.LENGTH_SHORT
-                    ).show();
-                    finish();
+
+                    // Step 2: Find existing registrations for this event.
+                    db.collection("registrations")
+                            .whereEqualTo("eventId", eventId)
+                            .whereEqualTo("organizerID", user.getUid())
+                            .get()
+                            .addOnSuccessListener(querySnapshot -> {
+
+                                if (isFinishing() || isDestroyed()) {
+                                    return;
+                                }
+
+                                if (querySnapshot.isEmpty()) {
+                                    showUpdateSuccess();
+                                    return;
+                                }
+
+                                // Firestore batches support at most 500 writes.
+                                if (querySnapshot.size() > 500) {
+                                    btnUpdate.setEnabled(true);
+                                    btnUpdate.setText("Save Changes");
+
+                                    Toast.makeText(
+                                            this,
+                                            "Event updated, but there are more than 500 registrations. Registration updates need to be processed in batches.",
+                                            Toast.LENGTH_LONG
+                                    ).show();
+
+                                    return;
+                                }
+
+                                // Step 3: Update copied details in registrations.
+                                WriteBatch batch = db.batch();
+
+                                for (DocumentSnapshot registration
+                                        : querySnapshot.getDocuments()) {
+
+                                    batch.update(
+                                            registration.getReference(),
+                                            "eventTitle", title,
+                                            "eventDate", date,
+                                            "eventTime", time,
+                                            "eventVenue", venue,
+                                            "eventCity", city,
+                                            "category", category,
+                                            "organizerName", organizerName,
+                                            "description", description,
+                                            "registrationRequired",
+                                            switchRegistrationRequired.isChecked()
+                                    );
+                                }
+
+                                batch.commit()
+                                        .addOnSuccessListener(result -> {
+                                            if (!isFinishing()
+                                                    && !isDestroyed()) {
+                                                showUpdateSuccess();
+                                            }
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            if (!isFinishing()
+                                                    && !isDestroyed()) {
+                                                showUpdateFailure(
+                                                        "The event was updated, but registration details could not be updated: "
+                                                                + e.getMessage()
+                                                );
+                                            }
+                                        });
+                            })
+                            .addOnFailureListener(e -> {
+                                if (!isFinishing() && !isDestroyed()) {
+                                    showUpdateFailure(
+                                            "The event was updated, but registrations could not be loaded: "
+                                                    + e.getMessage()
+                                    );
+                                }
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    btnUpdate.setEnabled(true);
-                    btnUpdate.setText("Save Changes");
-                    Toast.makeText(
-                            this,
-                            "Could not update event. Check Firestore permissions.",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    if (!isFinishing() && !isDestroyed()) {
+                        showUpdateFailure(
+                                "Could not update event: " + e.getMessage()
+                        );
+                    }
                 });
+    }
+
+    private void showUpdateSuccess() {
+        Toast.makeText(
+                this,
+                "Event and registration details updated successfully!",
+                Toast.LENGTH_SHORT
+        ).show();
+
+        finish();
+    }
+
+    private void showUpdateFailure(String message) {
+        btnUpdate.setEnabled(true);
+        btnUpdate.setText("Save Changes");
+
+        Toast.makeText(
+                this,
+                message,
+                Toast.LENGTH_LONG
+        ).show();
     }
 }

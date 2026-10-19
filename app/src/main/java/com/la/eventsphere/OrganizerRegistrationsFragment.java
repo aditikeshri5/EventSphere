@@ -33,6 +33,10 @@ public class OrganizerRegistrationsFragment extends Fragment {
     private FirebaseFirestore db;
     private ListenerRegistration listener;
 
+    // Listeners for the latest event details.
+    private final List<ListenerRegistration> eventListeners =
+            new ArrayList<>();
+
     public OrganizerRegistrationsFragment() {
         // Required empty constructor
     }
@@ -47,7 +51,8 @@ public class OrganizerRegistrationsFragment extends Fragment {
         View view = inflater.inflate(
                 R.layout.fragment_organizer_registrations,
                 container,
-                false);
+                false
+        );
 
         recyclerRegistrations =
                 view.findViewById(R.id.recyclerRegistrations);
@@ -58,7 +63,8 @@ public class OrganizerRegistrationsFragment extends Fragment {
         db = FirebaseFirestore.getInstance();
 
         recyclerRegistrations.setLayoutManager(
-                new LinearLayoutManager(requireContext()));
+                new LinearLayoutManager(requireContext())
+        );
 
         adapter = new RegistrationAdapter(registrationList);
         recyclerRegistrations.setAdapter(adapter);
@@ -69,66 +75,179 @@ public class OrganizerRegistrationsFragment extends Fragment {
     }
 
     private void loadRegistrations() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        FirebaseUser user =
+                FirebaseAuth.getInstance().getCurrentUser();
 
         if (user == null) {
             showEmpty("Please log in to view registrations.");
             return;
         }
 
-        listener = db.collection("registrations")
-                .whereEqualTo("organizerID", user.getUid())
-                .addSnapshotListener((snapshot, error) -> {
-                    if (!isAdded()) return;
+        String organizerId = user.getUid();
 
-                    if (error != null) {
-                        showEmpty("Unable to load registrations. Check Firestore rules.");
+        listener = db.collection("registrations")
+                .whereEqualTo("organizerID", organizerId)
+                .addSnapshotListener((snapshot, error) -> {
+
+                    if (!isAdded()
+                            || recyclerRegistrations == null
+                            || tvNoRegistrations == null) {
                         return;
                     }
 
+                    if (error != null) {
+                        showEmpty(
+                                "Unable to load registrations. "
+                                        + "Please check Firestore rules."
+                        );
+                        return;
+                    }
+
+                    // Remove old event listeners before rebuilding the list.
+                    removeEventListeners();
+
                     registrationList.clear();
 
-                    if (snapshot != null) {
-                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                            RegistrationItem item = new RegistrationItem();
+                    if (snapshot == null || snapshot.isEmpty()) {
+                        adapter.notifyDataSetChanged();
+                        showEmpty(
+                                "No registrations for your events yet."
+                        );
+                        return;
+                    }
 
-                            item.userName = getValue(doc, "userName", "Attendee");
-                            item.userEmail = getValue(doc, "userEmail", "Email unavailable");
-                            item.eventTitle = getValue(doc, "eventTitle", "Event");
-                            item.eventDate = getValue(doc, "eventDate", "");
-                            item.status = getValue(doc, "status", "registered");
+                    recyclerRegistrations.setVisibility(View.VISIBLE);
+                    tvNoRegistrations.setVisibility(View.GONE);
 
-                            registrationList.add(item);
+                    for (DocumentSnapshot doc :
+                            snapshot.getDocuments()) {
+
+                        RegistrationItem item =
+                                new RegistrationItem();
+
+                        item.registrationId = doc.getId();
+                        item.eventId = getValue(doc, "eventId", "");
+
+                        item.userName = getValue(
+                                doc, "userName", "Attendee"
+                        );
+
+                        item.userEmail = getValue(
+                                doc, "userEmail", "Email unavailable"
+                        );
+
+                        item.eventTitle = getValue(
+                                doc, "eventTitle", "Event"
+                        );
+
+                        // Initial fallback from the registration document.
+                        item.eventDate = getValue(
+                                doc, "eventDate", ""
+                        );
+
+                        item.status = getValue(
+                                doc, "status", "registered"
+                        );
+
+                        registrationList.add(item);
+
+                        // Fetch and listen to the current event document.
+                        if (!item.eventId.isEmpty()) {
+                            listenToLatestEvent(item);
                         }
                     }
 
                     adapter.notifyDataSetChanged();
 
                     if (registrationList.isEmpty()) {
-                        showEmpty("No registrations for your events yet.");
-                    } else {
-                        tvNoRegistrations.setVisibility(View.GONE);
-                        recyclerRegistrations.setVisibility(View.VISIBLE);
+                        showEmpty(
+                                "No registrations for your events yet."
+                        );
                     }
                 });
     }
 
-    private String getValue(DocumentSnapshot doc,
-                            String field,
-                            String fallback) {
+    private void listenToLatestEvent(RegistrationItem item) {
+
+        ListenerRegistration eventListener =
+                db.collection("events")
+                        .document(item.eventId)
+                        .addSnapshotListener((eventDoc, error) -> {
+
+                            if (!isAdded()
+                                    || recyclerRegistrations == null
+                                    || adapter == null) {
+                                return;
+                            }
+
+                            if (error != null
+                                    || eventDoc == null
+                                    || !eventDoc.exists()) {
+                                // Keep the saved registration details
+                                // if the event cannot be loaded.
+                                return;
+                            }
+
+                            // Read the latest values from the events
+                            // collection, not the old registration copy.
+                            String latestDate =
+                                    eventDoc.getString("date");
+
+                            String latestTitle =
+                                    eventDoc.getString("title");
+
+                            if (latestDate != null
+                                    && !latestDate.trim().isEmpty()) {
+                                item.eventDate = latestDate;
+                            }
+
+                            if (latestTitle != null
+                                    && !latestTitle.trim().isEmpty()) {
+                                item.eventTitle = latestTitle;
+                            }
+
+                            int index = registrationList.indexOf(item);
+
+                            if (index >= 0) {
+                                adapter.notifyItemChanged(index);
+                            }
+                        });
+
+        eventListeners.add(eventListener);
+    }
+
+    private String getValue(
+            DocumentSnapshot doc,
+            String field,
+            String fallback) {
+
         String value = doc.getString(field);
+
         return value == null || value.trim().isEmpty()
-                ? fallback : value;
+                ? fallback
+                : value;
     }
 
     private void showEmpty(String message) {
+
         if (tvNoRegistrations != null) {
             tvNoRegistrations.setText(message);
             tvNoRegistrations.setVisibility(View.VISIBLE);
         }
+
         if (recyclerRegistrations != null) {
             recyclerRegistrations.setVisibility(View.GONE);
         }
+    }
+
+    private void removeEventListeners() {
+
+        for (ListenerRegistration eventListener : eventListeners) {
+            eventListener.remove();
+        }
+
+        eventListeners.clear();
     }
 
     @Override
@@ -139,9 +258,18 @@ public class OrganizerRegistrationsFragment extends Fragment {
             listener.remove();
             listener = null;
         }
+
+        removeEventListeners();
+
+        recyclerRegistrations = null;
+        tvNoRegistrations = null;
+        adapter = null;
     }
 
     public static class RegistrationItem {
+
+        String registrationId;
+        String eventId;
         String userName;
         String userEmail;
         String eventTitle;
@@ -150,7 +278,8 @@ public class OrganizerRegistrationsFragment extends Fragment {
     }
 
     private static class RegistrationAdapter
-            extends RecyclerView.Adapter<RegistrationAdapter.RegistrationViewHolder> {
+            extends RecyclerView.Adapter<
+            RegistrationAdapter.RegistrationViewHolder> {
 
         private final List<RegistrationItem> items;
 
@@ -161,19 +290,23 @@ public class OrganizerRegistrationsFragment extends Fragment {
         @NonNull
         @Override
         public RegistrationViewHolder onCreateViewHolder(
-                @NonNull ViewGroup parent, int viewType) {
+                @NonNull ViewGroup parent,
+                int viewType) {
 
-            View view = LayoutInflater.from(parent.getContext()).inflate(
-                    R.layout.item_organizer_registration,
-                    parent,
-                    false);
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(
+                            R.layout.item_organizer_registration,
+                            parent,
+                            false
+                    );
 
             return new RegistrationViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(
-                @NonNull RegistrationViewHolder holder, int position) {
+                @NonNull RegistrationViewHolder holder,
+                int position) {
 
             RegistrationItem item = items.get(position);
 
@@ -181,12 +314,16 @@ public class OrganizerRegistrationsFragment extends Fragment {
             holder.tvAttendeeEmail.setText(item.userEmail);
             holder.tvRegisteredEvent.setText(item.eventTitle);
 
-            String dateText = item.eventDate.isEmpty()
-                    ? "Date unavailable" : item.eventDate;
+            String dateText = item.eventDate == null
+                    || item.eventDate.isEmpty()
+                    ? "Date unavailable"
+                    : item.eventDate;
 
             holder.tvRegistrationDate.setText(dateText);
+
             holder.tvRegistrationStatus.setText(
-                    "Status: " + item.status);
+                    "Status: " + item.status
+            );
         }
 
         @Override
@@ -208,12 +345,16 @@ public class OrganizerRegistrationsFragment extends Fragment {
 
                 tvAttendeeName =
                         itemView.findViewById(R.id.tvAttendeeName);
+
                 tvAttendeeEmail =
                         itemView.findViewById(R.id.tvAttendeeEmail);
+
                 tvRegisteredEvent =
                         itemView.findViewById(R.id.tvRegisteredEvent);
+
                 tvRegistrationDate =
                         itemView.findViewById(R.id.tvRegistrationDate);
+
                 tvRegistrationStatus =
                         itemView.findViewById(R.id.tvRegistrationStatus);
             }

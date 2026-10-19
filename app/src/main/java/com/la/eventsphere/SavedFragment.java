@@ -1,3 +1,4 @@
+
 package com.la.eventsphere;
 
 import android.os.Bundle;
@@ -14,11 +15,16 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class SavedFragment extends Fragment {
 
@@ -63,9 +69,7 @@ public class SavedFragment extends Fragment {
                 new LinearLayoutManager(requireContext())
         );
 
-        eventAdapter =
-                new EventAdapter(savedEventList);
-
+        eventAdapter = new EventAdapter(savedEventList);
         recyclerSavedEvents.setAdapter(eventAdapter);
 
         loadSavedEvents();
@@ -75,115 +79,168 @@ public class SavedFragment extends Fragment {
 
     private void loadSavedEvents() {
 
-        FirebaseUser currentUser =
-                mAuth.getCurrentUser();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
 
         if (currentUser == null) {
-
+            savedEventList.clear();
+            eventAdapter.notifyDataSetChanged();
             showEmptyMessage();
-
             return;
         }
 
-        String uid =
-                currentUser.getUid();
+        String uid = currentUser.getUid();
 
-        savedEventsListener =
-                db.collection("users")
-                        .document(uid)
-                        .collection("savedEvents")
-                        .addSnapshotListener((snapshot, error) -> {
+        savedEventsListener = db.collection("users")
+                .document(uid)
+                .collection("savedEvents")
+                .addSnapshotListener((snapshot, error) -> {
 
-                            if (error != null) {
+                    if (!isAdded()) {
+                        return;
+                    }
 
-                                showEmptyMessage();
+                    if (error != null || snapshot == null) {
+                        showEmptyMessage();
+                        return;
+                    }
 
-                                return;
-                            }
+                    savedEventList.clear();
 
-                            savedEventList.clear();
+                    if (snapshot.isEmpty()) {
+                        eventAdapter.notifyDataSetChanged();
+                        showEmptyMessage();
+                        return;
+                    }
 
-                            if (snapshot != null) {
+                    // Initially display the saved copies while fetching
+                    // the latest event documents.
+                    for (DocumentSnapshot savedDoc : snapshot.getDocuments()) {
+                        Event event = createEventFromDocument(savedDoc);
+                        savedEventList.add(event);
+                    }
 
-                                for (com.google.firebase.firestore.DocumentSnapshot document
-                                        : snapshot.getDocuments()) {
+                    eventAdapter.notifyDataSetChanged();
+                    showSavedEvents();
 
-                                    Event event =
-                                            new Event();
+                    // Fetch the latest details from events/{eventId}.
+                    for (DocumentSnapshot savedDoc : snapshot.getDocuments()) {
 
-                                    event.setEventId(
-                                            document.getId()
-                                    );
+                        String eventId = savedDoc.getId();
 
-                                    event.setTitle(
-                                            document.getString("title")
-                                    );
+                        db.collection("events")
+                                .document(eventId)
+                                .get()
+                                .addOnSuccessListener(eventDoc -> {
 
-                                    event.setCategory(
-                                            document.getString("category")
-                                    );
+                                    if (!isAdded() || !eventDoc.exists()) {
+                                        return;
+                                    }
 
-                                    event.setDate(
-                                            document.getString("date")
-                                    );
+                                    Event latestEvent =
+                                            createEventFromDocument(eventDoc);
 
-                                    event.setTime(
-                                            document.getString("time")
-                                    );
+                                    latestEvent.setEventId(eventId);
 
-                                    event.setVenue(
-                                            document.getString("venue")
-                                    );
+                                    // Replace the old card with the latest event.
+                                    for (int i = 0; i < savedEventList.size(); i++) {
+                                        if (eventId.equals(
+                                                savedEventList.get(i).getEventId())) {
 
-                                    event.setCity(
-                                            document.getString("city")
-                                    );
+                                            savedEventList.set(i, latestEvent);
+                                            break;
+                                        }
+                                    }
 
-                                    event.setOrganizerName(
-                                            document.getString("organizerName")
-                                    );
+                                    eventAdapter.notifyDataSetChanged();
 
-                                    savedEventList.add(event);
-                                }
-                            }
+                                    // Synchronize the stored saved-event copy.
+                                    syncSavedEvent(uid, eventId, savedDoc, eventDoc);
+                                });
+                    }
+                });
+    }
 
-                            eventAdapter.notifyDataSetChanged();
+    private Event createEventFromDocument(DocumentSnapshot document) {
 
-                            if (savedEventList.isEmpty()) {
+        Event event = new Event();
 
-                                showEmptyMessage();
+        event.setEventId(document.getId());
+        event.setTitle(document.getString("title"));
+        event.setCategory(document.getString("category"));
+        event.setDate(document.getString("date"));
+        event.setTime(document.getString("time"));
+        event.setVenue(document.getString("venue"));
+        event.setCity(document.getString("city"));
+        event.setOrganizerName(document.getString("organizerName"));
 
-                            } else {
+        return event;
+    }
 
-                                recyclerSavedEvents
-                                        .setVisibility(View.VISIBLE);
+    private void syncSavedEvent(
+            String uid,
+            String eventId,
+            DocumentSnapshot savedDoc,
+            DocumentSnapshot eventDoc) {
 
-                                tvNoSavedEvents
-                                        .setVisibility(View.GONE);
-                            }
-                        });
+        String[] fields = {
+                "title",
+                "category",
+                "date",
+                "time",
+                "venue",
+                "city",
+                "organizerName"
+        };
+
+        Map<String, Object> updates = new HashMap<>();
+
+        for (String field : fields) {
+
+            Object latestValue = eventDoc.get(field);
+            Object savedValue = savedDoc.get(field);
+
+            if (latestValue != null
+                    && !Objects.equals(latestValue, savedValue)) {
+
+                updates.put(field, latestValue);
+            }
+        }
+
+        if (updates.isEmpty()) {
+            return;
+        }
+
+        updates.put("syncedAt", FieldValue.serverTimestamp());
+
+        db.collection("users")
+                .document(uid)
+                .collection("savedEvents")
+                .document(eventId)
+                .update(updates)
+                .addOnFailureListener(error ->
+                        android.util.Log.e(
+                                "SavedFragment",
+                                "Could not sync saved event " + eventId,
+                                error
+                        ));
+    }
+
+    private void showSavedEvents() {
+        recyclerSavedEvents.setVisibility(View.VISIBLE);
+        tvNoSavedEvents.setVisibility(View.GONE);
     }
 
     private void showEmptyMessage() {
-
-        recyclerSavedEvents.setVisibility(
-                View.GONE
-        );
-
-        tvNoSavedEvents.setVisibility(
-                View.VISIBLE
-        );
+        recyclerSavedEvents.setVisibility(View.GONE);
+        tvNoSavedEvents.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onDestroyView() {
-
         super.onDestroyView();
 
         if (savedEventsListener != null) {
-
             savedEventsListener.remove();
-
             savedEventsListener = null;
         }
     }
