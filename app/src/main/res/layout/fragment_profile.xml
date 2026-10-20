@@ -15,7 +15,6 @@
         android:padding="20dp">
 
         <!-- TITLE -->
-
         <TextView
             android:id="@+id/tvProfileTitle"
             android:layout_width="wrap_content"
@@ -34,9 +33,7 @@
             android:textColor="#777777"
             android:textSize="14sp" />
 
-
         <!-- PROFILE CARD -->
-
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -50,11 +47,9 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:gravity="center_horizontal"
+                android:orientation="vertical"
                 android:padding="24dp">
-
-                <!-- AVATAR -->
 
                 <TextView
                     android:id="@+id/tvProfileAvatar"
@@ -67,8 +62,6 @@
                     android:textSize="28sp"
                     android:textStyle="bold" />
 
-                <!-- NAME -->
-
                 <TextView
                     android:id="@+id/tvProfileName"
                     android:layout_width="wrap_content"
@@ -78,8 +71,6 @@
                     android:textColor="#222222"
                     android:textSize="20sp"
                     android:textStyle="bold" />
-
-                <!-- EMAIL -->
 
                 <TextView
                     android:id="@+id/tvProfileEmail"
@@ -94,9 +85,100 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- ACCOUNT INFORMATION -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Account Information"
+            android:textColor="#222222"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
-        <!-- INTERESTS TITLE -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@android:color/white"
+            android:elevation="2dp"
+            android:orientation="vertical"
+            android:padding="16dp">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Full Name"
+                android:textColor="#777386"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvUserFullName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Loading..."
+                android:textColor="#29243B"
+                android:textSize="15sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="14dp"
+                android:background="#EEEAF7" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Email Address"
+                android:textColor="#777386"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvUserAccountEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Loading..."
+                android:textColor="#29243B"
+                android:textSize="15sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="14dp"
+                android:background="#EEEAF7" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Contact Number"
+                android:textColor="#777386"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvUserPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Not provided"
+                android:textColor="#29243B"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+
+        <!-- EDIT PROFILE -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEditUserProfile"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="20dp"
+            android:text="Edit Profile"
+            android:textAllCaps="false"
+            android:textColor="#5033D8"
+            app:backgroundTint="#E9E3FF"
+            app:cornerRadius="12dp" />
+
+        <!-- INTERESTS -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -117,9 +199,7 @@
             android:textColor="#555555"
             android:textSize="14sp" />
 
-
         <!-- EDIT INTERESTS -->
-
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnEditInterests"
             android:layout_width="match_parent"
@@ -133,14 +213,12 @@
             app:strokeColor="#5033D8"
             app:strokeWidth="1dp" />
 
-
         <!-- LOGOUT -->
-
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:layout_marginTop="28dp"
+            android:layout_marginTop="20dp"
             android:layout_marginBottom="20dp"
             android:text="Logout"
             android:textAllCaps="false"
