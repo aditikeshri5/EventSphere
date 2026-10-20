@@ -14,11 +14,13 @@ public class Event {
     private String time;
     private String title;
     private String venue;
+    private int registeredCount;
 
     // Required empty constructor for Firestore
     public Event() {
     }
 
+    // Event ID
     public String getEventId() {
         return eventId;
     }
@@ -27,6 +29,7 @@ public class Event {
         this.eventId = eventId;
     }
 
+    // Category
     public String getCategory() {
         return category;
     }
@@ -35,6 +38,7 @@ public class Event {
         this.category = category;
     }
 
+    // City
     public String getCity() {
         return city;
     }
@@ -43,6 +47,7 @@ public class Event {
         this.city = city;
     }
 
+    // Date
     public String getDate() {
         return date;
     }
@@ -51,6 +56,7 @@ public class Event {
         this.date = date;
     }
 
+    // Description
     public String getDescription() {
         return description;
     }
@@ -59,6 +65,7 @@ public class Event {
         this.description = description;
     }
 
+    // Image URL
     public String getImageURL() {
         return imageURL;
     }
@@ -67,6 +74,7 @@ public class Event {
         this.imageURL = imageURL;
     }
 
+    // Organizer ID
     public String getOrganizerID() {
         return organizerID;
     }
@@ -75,6 +83,7 @@ public class Event {
         this.organizerID = organizerID;
     }
 
+    // Organizer Name
     public String getOrganizerName() {
         return organizerName;
     }
@@ -83,6 +92,7 @@ public class Event {
         this.organizerName = organizerName;
     }
 
+    // Registration Required
     public boolean isRegistrationRequired() {
         return registrationRequired;
     }
@@ -91,6 +101,7 @@ public class Event {
         this.registrationRequired = registrationRequired;
     }
 
+    // Time
     public String getTime() {
         return time;
     }
@@ -99,6 +110,7 @@ public class Event {
         this.time = time;
     }
 
+    // Title
     public String getTitle() {
         return title;
     }
@@ -107,11 +119,21 @@ public class Event {
         this.title = title;
     }
 
+    // Venue
     public String getVenue() {
         return venue;
     }
 
     public void setVenue(String venue) {
         this.venue = venue;
+    }
+
+    // Registered Count
+    public int getRegisteredCount() {
+        return registeredCount;
+    }
+
+    public void setRegisteredCount(int registeredCount) {
+        this.registeredCount = registeredCount;
     }
 }

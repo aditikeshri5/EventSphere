@@ -1,3 +1,4 @@
+
 package com.la.eventsphere;
 
 import android.content.Intent;
@@ -14,9 +15,7 @@ import androidx.fragment.app.Fragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-
-import java.util.concurrent.atomic.AtomicInteger;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class OrganizerDashboardFragment extends Fragment {
 
@@ -26,6 +25,9 @@ public class OrganizerDashboardFragment extends Fragment {
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
 
+    private ListenerRegistration eventsListener;
+    private ListenerRegistration registrationsListener;
+
     public OrganizerDashboardFragment() {
         super(R.layout.fragment_organizer_dashboard);
     }
@@ -34,26 +36,29 @@ public class OrganizerDashboardFragment extends Fragment {
     public void onViewCreated(
             @NonNull View view,
             @Nullable Bundle savedInstanceState) {
+
         super.onViewCreated(view, savedInstanceState);
 
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        tvTotalEvents = view.findViewById(R.id.tvOrganizerTotalEvents);
+        tvTotalEvents =
+                view.findViewById(R.id.tvOrganizerTotalEvents);
+
         tvTotalRegistrations =
                 view.findViewById(R.id.tvOrganizerTotalRegistrations);
 
         Button btnCreate =
                 view.findViewById(R.id.btnCreateOrganizerEvent);
+
         Button btnManage =
                 view.findViewById(R.id.btnManageOrganizerEvents);
+
         Button btnRegistrations =
                 view.findViewById(R.id.btnViewOrganizerRegistrations);
 
         btnCreate.setOnClickListener(v -> {
-            FirebaseUser user = mAuth.getCurrentUser();
-
-            if (user == null) {
+            if (mAuth.getCurrentUser() == null) {
                 Toast.makeText(
                         requireContext(),
                         "Please log in again.",
@@ -63,35 +68,40 @@ public class OrganizerDashboardFragment extends Fragment {
             }
 
             startActivity(
-                    new Intent(requireContext(), CreateEventActivity.class)
+                    new Intent(
+                            requireContext(),
+                            CreateEventActivity.class
+                    )
             );
         });
 
-        btnManage.setOnClickListener(v ->
-                requireActivity()
-                        .findViewById(R.id.navOrganizerEvents)
-                        .performClick()
-        );
+        btnManage.setOnClickListener(v -> {
+            View nav = requireActivity().findViewById(
+                    R.id.navOrganizerEvents
+            );
 
-        btnRegistrations.setOnClickListener(v ->
-                requireActivity()
-                        .findViewById(R.id.navOrganizerRegistrations)
-                        .performClick()
-        );
+            if (nav != null) {
+                nav.performClick();
+            }
+        });
+
+        btnRegistrations.setOnClickListener(v -> {
+            View nav = requireActivity().findViewById(
+                    R.id.navOrganizerRegistrations
+            );
+
+            if (nav != null) {
+                nav.performClick();
+            }
+        });
 
         loadDashboardStatistics();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        if (isAdded() && tvTotalEvents != null) {
-            loadDashboardStatistics();
-        }
-    }
-
     private void loadDashboardStatistics() {
+
+        removeListeners();
+
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user == null) {
@@ -105,68 +115,79 @@ public class OrganizerDashboardFragment extends Fragment {
         tvTotalEvents.setText("...");
         tvTotalRegistrations.setText("...");
 
-        // Only count events belonging to this organizer.
-        db.collection("events")
-                .whereEqualTo("organizerId", organizerId)
-                .get()
-                .addOnSuccessListener(eventDocuments -> {
+        // Count this organizer's events in real time.
+        eventsListener = db.collection("events")
+                .whereEqualTo("organizerID", organizerId)
+                .addSnapshotListener((snapshot, error) -> {
 
-                    if (!isAdded()) {
+                    if (!isAdded() || tvTotalEvents == null) {
                         return;
                     }
 
-                    tvTotalEvents.setText(
-                            String.valueOf(eventDocuments.size())
-                    );
-
-                    if (eventDocuments.isEmpty()) {
-                        tvTotalRegistrations.setText("0");
-                        return;
-                    }
-
-                    AtomicInteger completedQueries = new AtomicInteger(0);
-                    AtomicInteger registrationCount = new AtomicInteger(0);
-                    int totalEvents = eventDocuments.size();
-
-                    for (QueryDocumentSnapshot event : eventDocuments) {
-                        String eventId = event.getId();
-
-                        db.collection("registrations")
-                                .whereEqualTo("eventId", eventId)
-                                .get()
-                                .addOnCompleteListener(task -> {
-
-                                    if (task.isSuccessful()
-                                            && task.getResult() != null) {
-                                        registrationCount.addAndGet(
-                                                task.getResult().size()
-                                        );
-                                    }
-
-                                    int completed =
-                                            completedQueries.incrementAndGet();
-
-                                    if (completed == totalEvents && isAdded()) {
-                                        tvTotalRegistrations.setText(
-                                                String.valueOf(
-                                                        registrationCount.get()
-                                                )
-                                        );
-                                    }
-                                });
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    if (isAdded()) {
+                    if (error != null) {
                         tvTotalEvents.setText("—");
-                        tvTotalRegistrations.setText("—");
-
                         Toast.makeText(
                                 requireContext(),
-                                "Unable to load dashboard statistics.",
+                                "Unable to load events count.",
                                 Toast.LENGTH_SHORT
                         ).show();
+                        return;
+                    }
+
+                    if (snapshot != null) {
+                        tvTotalEvents.setText(
+                                String.valueOf(snapshot.size())
+                        );
                     }
                 });
+
+        // Count successful registrations for this organizer in real time.
+        registrationsListener = db.collection("registrations")
+                .whereEqualTo("organizerID", organizerId)
+                .whereEqualTo("status", "registered")
+                .addSnapshotListener((snapshot, error) -> {
+
+                    if (!isAdded() || tvTotalRegistrations == null) {
+                        return;
+                    }
+
+                    if (error != null) {
+                        tvTotalRegistrations.setText("—");
+                        Toast.makeText(
+                                requireContext(),
+                                "Unable to load registrations count.",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                        return;
+                    }
+
+                    if (snapshot != null) {
+                        tvTotalRegistrations.setText(
+                                String.valueOf(snapshot.size())
+                        );
+                    }
+                });
+    }
+
+    private void removeListeners() {
+        if (eventsListener != null) {
+            eventsListener.remove();
+            eventsListener = null;
+        }
+
+        if (registrationsListener != null) {
+            registrationsListener.remove();
+            registrationsListener = null;
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        removeListeners();
+
+        tvTotalEvents = null;
+        tvTotalRegistrations = null;
+
+        super.onDestroyView();
     }
 }

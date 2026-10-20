@@ -1,7 +1,7 @@
-
 package com.la.eventsphere;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.Objects;
 
 public class SavedFragment extends Fragment {
+
+    private static final String TAG = "SavedFragment";
 
     private RecyclerView recyclerSavedEvents;
     private TextView tvNoSavedEvents;
@@ -90,16 +92,21 @@ public class SavedFragment extends Fragment {
 
         String uid = currentUser.getUid();
 
+        if (savedEventsListener != null) {
+            savedEventsListener.remove();
+        }
+
         savedEventsListener = db.collection("users")
                 .document(uid)
                 .collection("savedEvents")
                 .addSnapshotListener((snapshot, error) -> {
 
-                    if (!isAdded()) {
+                    if (!isAdded() || eventAdapter == null) {
                         return;
                     }
 
                     if (error != null || snapshot == null) {
+                        Log.e(TAG, "Failed to load saved events", error);
                         showEmptyMessage();
                         return;
                     }
@@ -112,17 +119,19 @@ public class SavedFragment extends Fragment {
                         return;
                     }
 
-                    // Initially display the saved copies while fetching
-                    // the latest event documents.
+                    // Display saved copies temporarily while fetching
+                    // the latest data from the main events collection.
                     for (DocumentSnapshot savedDoc : snapshot.getDocuments()) {
-                        Event event = createEventFromDocument(savedDoc);
-                        savedEventList.add(event);
+                        Event savedEvent =
+                                createEventFromDocument(savedDoc);
+
+                        savedEventList.add(savedEvent);
                     }
 
                     eventAdapter.notifyDataSetChanged();
                     showSavedEvents();
 
-                    // Fetch the latest details from events/{eventId}.
+                    // Fetch the latest event document for each saved event.
                     for (DocumentSnapshot savedDoc : snapshot.getDocuments()) {
 
                         String eventId = savedDoc.getId();
@@ -132,19 +141,27 @@ public class SavedFragment extends Fragment {
                                 .get()
                                 .addOnSuccessListener(eventDoc -> {
 
-                                    if (!isAdded() || !eventDoc.exists()) {
+                                    if (!isAdded()
+                                            || eventAdapter == null
+                                            || !eventDoc.exists()) {
                                         return;
                                     }
 
+                                    // Build the event using the main
+                                    // event document, including its count.
                                     Event latestEvent =
                                             createEventFromDocument(eventDoc);
 
                                     latestEvent.setEventId(eventId);
 
-                                    // Replace the old card with the latest event.
-                                    for (int i = 0; i < savedEventList.size(); i++) {
+                                    // Replace the matching saved card.
+                                    for (int i = 0;
+                                         i < savedEventList.size();
+                                         i++) {
+
                                         if (eventId.equals(
-                                                savedEventList.get(i).getEventId())) {
+                                                savedEventList.get(i)
+                                                        .getEventId())) {
 
                                             savedEventList.set(i, latestEvent);
                                             break;
@@ -153,14 +170,27 @@ public class SavedFragment extends Fragment {
 
                                     eventAdapter.notifyDataSetChanged();
 
-                                    // Synchronize the stored saved-event copy.
-                                    syncSavedEvent(uid, eventId, savedDoc, eventDoc);
-                                });
+                                    // Sync updated details into savedEvents.
+                                    syncSavedEvent(
+                                            uid,
+                                            eventId,
+                                            savedDoc,
+                                            eventDoc
+                                    );
+                                })
+                                .addOnFailureListener(refresherror ->
+                                        Log.e(
+                                                TAG,
+                                                "Failed to refresh event: "
+                                                        + eventId,
+                                                refresherror
+                                        ));
                     }
                 });
     }
 
-    private Event createEventFromDocument(DocumentSnapshot document) {
+    private Event createEventFromDocument(
+            DocumentSnapshot document) {
 
         Event event = new Event();
 
@@ -171,7 +201,25 @@ public class SavedFragment extends Fragment {
         event.setTime(document.getString("time"));
         event.setVenue(document.getString("venue"));
         event.setCity(document.getString("city"));
+        event.setDescription(document.getString("description"));
+        event.setImageURL(document.getString("imageURL"));
+        event.setOrganizerID(document.getString("organizerID"));
         event.setOrganizerName(document.getString("organizerName"));
+
+        Boolean registrationRequired =
+                document.getBoolean("registrationRequired");
+
+        event.setRegistrationRequired(
+                registrationRequired != null && registrationRequired
+        );
+
+        Long registeredCount = document.getLong("registeredCount");
+
+        event.setRegisteredCount(
+                registeredCount != null
+                        ? Math.max(0, registeredCount.intValue())
+                        : 0
+        );
 
         return event;
     }
@@ -189,7 +237,12 @@ public class SavedFragment extends Fragment {
                 "time",
                 "venue",
                 "city",
-                "organizerName"
+                "description",
+                "imageURL",
+                "organizerID",
+                "organizerName",
+                "registrationRequired",
+                "registeredCount"
         };
 
         Map<String, Object> updates = new HashMap<>();
@@ -199,7 +252,8 @@ public class SavedFragment extends Fragment {
             Object latestValue = eventDoc.get(field);
             Object savedValue = savedDoc.get(field);
 
-            if (latestValue != null
+            // Sync the latest count even if it is zero.
+            if (eventDoc.contains(field)
                     && !Objects.equals(latestValue, savedValue)) {
 
                 updates.put(field, latestValue);
@@ -218,30 +272,38 @@ public class SavedFragment extends Fragment {
                 .document(eventId)
                 .update(updates)
                 .addOnFailureListener(error ->
-                        android.util.Log.e(
-                                "SavedFragment",
+                        Log.e(
+                                TAG,
                                 "Could not sync saved event " + eventId,
                                 error
                         ));
     }
 
     private void showSavedEvents() {
-        recyclerSavedEvents.setVisibility(View.VISIBLE);
-        tvNoSavedEvents.setVisibility(View.GONE);
+        if (recyclerSavedEvents != null && tvNoSavedEvents != null) {
+            recyclerSavedEvents.setVisibility(View.VISIBLE);
+            tvNoSavedEvents.setVisibility(View.GONE);
+        }
     }
 
     private void showEmptyMessage() {
-        recyclerSavedEvents.setVisibility(View.GONE);
-        tvNoSavedEvents.setVisibility(View.VISIBLE);
+        if (recyclerSavedEvents != null && tvNoSavedEvents != null) {
+            recyclerSavedEvents.setVisibility(View.GONE);
+            tvNoSavedEvents.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
-
         if (savedEventsListener != null) {
             savedEventsListener.remove();
             savedEventsListener = null;
         }
+
+        recyclerSavedEvents = null;
+        tvNoSavedEvents = null;
+        eventAdapter = null;
+
+        super.onDestroyView();
     }
 }

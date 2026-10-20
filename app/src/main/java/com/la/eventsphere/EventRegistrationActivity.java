@@ -1,7 +1,6 @@
 package com.la.eventsphere;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -12,10 +11,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -65,9 +65,11 @@ public class EventRegistrationActivity extends AppCompatActivity {
         FirebaseUser user = auth.getCurrentUser();
 
         if (user == null) {
-            Toast.makeText(this,
+            Toast.makeText(
+                    this,
                     "Please log in to register.",
-                    Toast.LENGTH_LONG).show();
+                    Toast.LENGTH_LONG
+            ).show();
             finish();
             return;
         }
@@ -80,9 +82,11 @@ public class EventRegistrationActivity extends AppCompatActivity {
         eventId = getIntent().getStringExtra("eventId");
 
         if (eventId == null || eventId.trim().isEmpty()) {
-            Toast.makeText(this,
+            Toast.makeText(
+                    this,
                     "Event information is missing. Please open the event again.",
-                    Toast.LENGTH_LONG).show();
+                    Toast.LENGTH_LONG
+            ).show();
             finish();
             return;
         }
@@ -114,7 +118,6 @@ public class EventRegistrationActivity extends AppCompatActivity {
     }
 
     private void loadUserDetails(FirebaseUser user) {
-        // Show available Authentication details immediately.
         tvRegistrationUserName.setText(
                 userName.isEmpty() ? "Loading profile..." : userName
         );
@@ -123,7 +126,6 @@ public class EventRegistrationActivity extends AppCompatActivity {
                 userEmail.isEmpty() ? "Email not available" : userEmail
         );
 
-        // Then try to load the full user profile from Firestore.
         db.collection("users")
                 .document(userId)
                 .get()
@@ -140,8 +142,7 @@ public class EventRegistrationActivity extends AppCompatActivity {
                                 profile.getString("displayName")
                         );
 
-                        String profileEmail =
-                                profile.getString("email");
+                        String profileEmail = profile.getString("email");
 
                         if (!profileName.isEmpty()) {
                             userName = profileName;
@@ -166,8 +167,10 @@ public class EventRegistrationActivity extends AppCompatActivity {
                     );
                 })
                 .addOnFailureListener(e -> {
-                    // Authentication details remain usable if the
-                    // Firestore profile cannot be read.
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+
                     tvRegistrationUserName.setText(
                             userName.isEmpty()
                                     ? "Name not available"
@@ -196,9 +199,11 @@ public class EventRegistrationActivity extends AppCompatActivity {
                     }
 
                     if (!event.exists()) {
-                        Toast.makeText(this,
+                        Toast.makeText(
+                                this,
                                 "This event is no longer available.",
-                                Toast.LENGTH_LONG).show();
+                                Toast.LENGTH_LONG
+                        ).show();
                         finish();
                         return;
                     }
@@ -211,8 +216,7 @@ public class EventRegistrationActivity extends AppCompatActivity {
                     String venue = value(event, "venue");
                     String city = value(event, "city");
                     String category = value(event, "category");
-                    String organizerName =
-                            value(event, "organizerName");
+                    String organizerName = value(event, "organizerName");
 
                     tvRegistrationEventTitle.setText(
                             title.isEmpty() ? "Event" : title
@@ -258,46 +262,42 @@ public class EventRegistrationActivity extends AppCompatActivity {
                     checkExistingRegistration();
                 })
                 .addOnFailureListener(e -> {
-                    tvRegistrationEventTitle.setText(
-                            "Unable to load event"
-                    );
-                    tvRegistrationEventDate.setText(
-                            "Please go back and try again."
-                    );
-                    tvRegistrationEventVenue.setText("");
-
-                    btnConfirmRegistration.setEnabled(false);
-
-                    Toast.makeText(this,
-                            "Could not load event details: "
-                                    + e.getLocalizedMessage(),
-                            Toast.LENGTH_LONG).show();
-                });
-    }
-
-    private void checkExistingRegistration() {
-        // Query only this user's registrations. This works with
-        // rules that allow users to read their own registration records.
-        db.collection("registrations")
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("eventId", eventId)
-                .get()
-                .addOnSuccessListener(snapshot -> {
                     if (isFinishing() || isDestroyed()) {
                         return;
                     }
 
-                    alreadyRegistered = false;
+                    tvRegistrationEventTitle.setText("Unable to load event");
+                    tvRegistrationEventDate.setText(
+                            "Please go back and try again."
+                    );
+                    tvRegistrationEventVenue.setText("");
+                    btnConfirmRegistration.setEnabled(false);
 
-                    for (DocumentSnapshot registration
-                            : snapshot.getDocuments()) {
+                    Toast.makeText(
+                            this,
+                            "Could not load event details: "
+                                    + e.getLocalizedMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+                });
+    }
 
-                        if ("registered".equals(
-                                registration.getString("status"))) {
-                            alreadyRegistered = true;
-                            break;
-                        }
+    private DocumentReference getRegistrationReference() {
+        return db.collection("registrations")
+                .document(eventId + "_" + userId);
+    }
+
+    private void checkExistingRegistration() {
+        getRegistrationReference()
+                .get()
+                .addOnSuccessListener(registration -> {
+                    if (isFinishing() || isDestroyed()) {
+                        return;
                     }
+
+                    alreadyRegistered = registration.exists()
+                            && "registered".equals(
+                            registration.getString("status"));
 
                     registrationChecked = true;
 
@@ -314,13 +314,19 @@ public class EventRegistrationActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+
                     registrationChecked = false;
                     btnConfirmRegistration.setEnabled(false);
 
-                    Toast.makeText(this,
+                    Toast.makeText(
+                            this,
                             "Could not check registration. "
                                     + "Please check your Firestore rules.",
-                            Toast.LENGTH_LONG).show();
+                            Toast.LENGTH_LONG
+                    ).show();
                 });
     }
 
@@ -330,30 +336,38 @@ public class EventRegistrationActivity extends AppCompatActivity {
         }
 
         if (auth.getCurrentUser() == null) {
-            Toast.makeText(this,
+            Toast.makeText(
+                    this,
                     "Please log in to register.",
-                    Toast.LENGTH_LONG).show();
+                    Toast.LENGTH_LONG
+            ).show();
             return;
         }
 
         if (!eventLoaded || eventDocument == null) {
-            Toast.makeText(this,
+            Toast.makeText(
+                    this,
                     "Event details are still loading. Please wait.",
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_SHORT
+            ).show();
             return;
         }
 
         if (!registrationChecked) {
-            Toast.makeText(this,
+            Toast.makeText(
+                    this,
                     "Please wait while we verify your registration.",
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_SHORT
+            ).show();
             return;
         }
 
         if (alreadyRegistered) {
-            Toast.makeText(this,
+            Toast.makeText(
+                    this,
                     "You have already registered for this event.",
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_SHORT
+            ).show();
             return;
         }
 
@@ -361,103 +375,128 @@ public class EventRegistrationActivity extends AppCompatActivity {
         btnConfirmRegistration.setEnabled(false);
         btnConfirmRegistration.setText("Registering...");
 
-        // Recheck immediately before writing to avoid ordinary
-        // duplicate taps or repeat registrations.
-        db.collection("registrations")
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("eventId", eventId)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    boolean found = false;
-
-                    for (DocumentSnapshot registration
-                            : snapshot.getDocuments()) {
-                        if ("registered".equals(
-                                registration.getString("status"))) {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (found) {
-                        registrationInProgress = false;
-                        alreadyRegistered = true;
-                        btnConfirmRegistration.setText(
-                                "Already Registered"
-                        );
-                        btnConfirmRegistration.setEnabled(false);
-
-                        Toast.makeText(this,
-                                "You have already registered.",
-                                Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    saveRegistration();
-                })
-                .addOnFailureListener(e -> {
-                    resetButton();
-
-                    Toast.makeText(this,
-                            "Unable to verify registration. "
-                                    + e.getLocalizedMessage(),
-                            Toast.LENGTH_LONG).show();
-                });
+        saveRegistration();
     }
 
     private void saveRegistration() {
-        Map<String, Object> registration = new HashMap<>();
+        DocumentReference eventRef = db.collection("events")
+                .document(eventId);
 
-        registration.put("eventId", eventId);
-        registration.put("eventTitle", value(eventDocument, "title"));
-        registration.put("eventDate", value(eventDocument, "date"));
-        registration.put("eventTime", value(eventDocument, "time"));
-        registration.put("eventVenue", value(eventDocument, "venue"));
-        registration.put("eventCity", value(eventDocument, "city"));
-        registration.put("category", value(eventDocument, "category"));
+        DocumentReference registrationRef =
+                getRegistrationReference();
 
-        registration.put(
-                "organizerID",
-                value(eventDocument, "organizerID")
-        );
+        // Read first, then create the registration and increment the
+        // event count together in one atomic Firestore transaction.
+        db.runTransaction(transaction -> {
 
-        registration.put(
-                "organizerName",
-                value(eventDocument, "organizerName")
-        );
+            DocumentSnapshot currentEvent =
+                    transaction.get(eventRef);
 
-        registration.put("userId", userId);
-        registration.put("userName", userName);
-        registration.put("userEmail", userEmail);
-        registration.put("status", "registered");
-        registration.put("registeredAt", FieldValue.serverTimestamp());
+            DocumentSnapshot existingRegistration =
+                    transaction.get(registrationRef);
 
-        // Use add() so each registration has its own generated document ID.
-        // The duplicate check above prevents ordinary repeat registrations.
-        db.collection("registrations")
-                .add(registration)
-                .addOnSuccessListener(reference -> {
-                    registrationInProgress = false;
-                    alreadyRegistered = true;
+            if (!currentEvent.exists()) {
+                throw new IllegalStateException(
+                        "This event is no longer available."
+                );
+            }
 
-                    btnConfirmRegistration.setText("Registered ✓");
-                    btnConfirmRegistration.setEnabled(false);
+            if (existingRegistration.exists()
+                    && "registered".equals(
+                    existingRegistration.getString("status"))) {
+                throw new IllegalStateException(
+                        "You have already registered for this event."
+                );
+            }
 
-                    Toast.makeText(this,
-                            "Registration successful!",
-                            Toast.LENGTH_LONG).show();
+            Boolean required =
+                    currentEvent.getBoolean("registrationRequired");
 
-                    // Return to the previous screen after successful save.
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    resetButton();
+            if (Boolean.FALSE.equals(required)) {
+                throw new IllegalStateException(
+                        "Registration is not required for this event."
+                );
+            }
 
-                    Toast.makeText(this,
-                            "Registration failed: "
-                                    + e.getLocalizedMessage(),
-                            Toast.LENGTH_LONG).show();
-                });
+            Map<String, Object> registration = new HashMap<>();
+
+            registration.put("eventId", eventId);
+            registration.put("eventTitle",
+                    value(currentEvent, "title"));
+            registration.put("eventDate",
+                    value(currentEvent, "date"));
+            registration.put("eventTime",
+                    value(currentEvent, "time"));
+            registration.put("eventVenue",
+                    value(currentEvent, "venue"));
+            registration.put("eventCity",
+                    value(currentEvent, "city"));
+            registration.put("category",
+                    value(currentEvent, "category"));
+            registration.put("organizerID",
+                    value(currentEvent, "organizerID"));
+            registration.put("organizerName",
+                    value(currentEvent, "organizerName"));
+            registration.put("userId", userId);
+            registration.put("userName", userName);
+            registration.put("userEmail", userEmail);
+            registration.put("status", "registered");
+            registration.put("registeredAt",
+                    FieldValue.serverTimestamp());
+
+            transaction.set(registrationRef, registration);
+
+            // Increment registeredCount only when this registration
+            // is created successfully.
+            transaction.update(
+                    eventRef,
+                    "registeredCount",
+                    FieldValue.increment(1)
+            );
+
+            return null;
+
+        }).addOnSuccessListener(unused -> {
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+
+            registrationInProgress = false;
+            alreadyRegistered = true;
+
+            btnConfirmRegistration.setText("Registered ✓");
+            btnConfirmRegistration.setEnabled(false);
+
+            Toast.makeText(
+                    this,
+                    "Registration successful!",
+                    Toast.LENGTH_LONG
+            ).show();
+
+            finish();
+        }).addOnFailureListener(e -> {
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+
+            registrationInProgress = false;
+
+            // If a previous attempt or another device registered this
+            // user, refresh the button state instead of incrementing again.
+            checkExistingRegistration();
+
+            String message = e.getLocalizedMessage();
+
+            Toast.makeText(
+                    this,
+                    "Registration failed: "
+                            + (message == null
+                            ? "Please try again."
+                            : message)
+                            + " Check Firestore rules if permission is denied.",
+                    Toast.LENGTH_LONG
+            ).show();
+        });
     }
 
     private String value(DocumentSnapshot document, String field) {
@@ -472,19 +511,5 @@ public class EventRegistrationActivity extends AppCompatActivity {
             }
         }
         return "";
-    }
-
-    private void resetButton() {
-        registrationInProgress = false;
-
-        if (alreadyRegistered) {
-            btnConfirmRegistration.setText("Already Registered");
-            btnConfirmRegistration.setEnabled(false);
-        } else {
-            btnConfirmRegistration.setText("Confirm Registration");
-            btnConfirmRegistration.setEnabled(
-                    eventLoaded && registrationChecked
-            );
-        }
     }
 }

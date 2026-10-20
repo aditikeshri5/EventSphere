@@ -1,3 +1,4 @@
+
 package com.la.eventsphere;
 
 import android.content.Intent;
@@ -56,7 +57,7 @@ public class EventAdapter
 
         Event event = eventList.get(position);
 
-        // Dynamically display event details from Firestore data
+        // Display event details
         holder.tvEventCategory.setText(
                 nonEmpty(event.getCategory(), "Event"));
 
@@ -64,19 +65,38 @@ public class EventAdapter
                 nonEmpty(event.getTitle(), "Untitled event"));
 
         holder.tvEventDate.setText(
-                "📅  " + nonEmpty(event.getDate(), "Date to be announced"));
+                "📅  " + nonEmpty(
+                        event.getDate(),
+                        "Date to be announced"));
 
         holder.tvEventTime.setText(
-                "🕐  " + nonEmpty(event.getTime(), "Time to be announced"));
+                "🕐  " + nonEmpty(
+                        event.getTime(),
+                        "Time to be announced"));
 
         holder.tvEventVenue.setText(
-                "📍  " + nonEmpty(event.getVenue(), "Venue to be announced"));
+                "📍  " + nonEmpty(
+                        event.getVenue(),
+                        "Venue to be announced"));
 
         holder.tvEventCity.setText(
                 nonEmpty(event.getCity(), ""));
 
+        // Display registration count
+        int registrationCount = Math.max(
+                0, event.getRegisteredCount());
+
+        holder.tvEventRegistrationCount.setText(
+                registrationCount
+                        + (registrationCount == 1
+                        ? " Registration"
+                        : " Registrations")
+        );
+
+        // Display organizer information
         String organizer = nonEmpty(
-                event.getOrganizerName(), "Event Organizer");
+                event.getOrganizerName(),
+                "Event Organizer");
 
         holder.tvOrganizerName.setText("By " + organizer);
 
@@ -86,42 +106,51 @@ public class EventAdapter
 
         // Open event details
         holder.itemView.setOnClickListener(v -> {
+
             String eventId = event.getEventId();
 
             if (eventId == null || eventId.isEmpty()) {
-                Toast.makeText(v.getContext(),
+                Toast.makeText(
+                        v.getContext(),
                         "Unable to open event details.",
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT
+                ).show();
                 return;
             }
 
             Intent intent = new Intent(
-                    v.getContext(), EventDetailsActivity.class);
+                    v.getContext(),
+                    EventDetailsActivity.class);
 
             intent.putExtra("eventId", eventId);
             v.getContext().startActivity(intent);
         });
 
-        // Show the correct star for this event
+        // Display saved or unsaved star
         checkSavedStatus(holder, event);
 
-        // Save or unsave when the star is tapped
+        // Save or unsave event
         holder.ivSave.setOnClickListener(v -> {
+
             FirebaseUser currentUser = mAuth.getCurrentUser();
 
             if (currentUser == null) {
-                Toast.makeText(v.getContext(),
+                Toast.makeText(
+                        v.getContext(),
                         "Please login to save events.",
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT
+                ).show();
                 return;
             }
 
             String eventId = event.getEventId();
 
             if (eventId == null || eventId.isEmpty()) {
-                Toast.makeText(v.getContext(),
+                Toast.makeText(
+                        v.getContext(),
                         "Unable to save this event.",
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT
+                ).show();
                 return;
             }
 
@@ -137,6 +166,7 @@ public class EventAdapter
                     .addOnSuccessListener(snapshot -> {
 
                         if (snapshot.exists()) {
+
                             // UNSAVE EVENT
                             db.collection("users")
                                     .document(uid)
@@ -144,21 +174,27 @@ public class EventAdapter
                                     .document(eventId)
                                     .delete()
                                     .addOnSuccessListener(unused -> {
+
                                         setStar(holder.ivSave, false);
 
-                                        Toast.makeText(v.getContext(),
+                                        Toast.makeText(
+                                                v.getContext(),
                                                 "Event removed from saved.",
-                                                Toast.LENGTH_SHORT).show();
+                                                Toast.LENGTH_SHORT
+                                        ).show();
                                     })
                                     .addOnFailureListener(e ->
-                                            Toast.makeText(v.getContext(),
+                                            Toast.makeText(
+                                                    v.getContext(),
                                                     "Unable to remove saved event.",
-                                                    Toast.LENGTH_SHORT).show()
+                                                    Toast.LENGTH_SHORT
+                                            ).show()
                                     )
                                     .addOnCompleteListener(task ->
                                             holder.ivSave.setEnabled(true));
 
                         } else {
+
                             // SAVE EVENT
                             Map<String, Object> savedEvent =
                                     new HashMap<>();
@@ -180,33 +216,44 @@ public class EventAdapter
                                     .document(eventId)
                                     .set(savedEvent)
                                     .addOnSuccessListener(unused -> {
+
                                         setStar(holder.ivSave, true);
 
-                                        Toast.makeText(v.getContext(),
+                                        Toast.makeText(
+                                                v.getContext(),
                                                 "Event saved!",
-                                                Toast.LENGTH_SHORT).show();
+                                                Toast.LENGTH_SHORT
+                                        ).show();
                                     })
                                     .addOnFailureListener(e ->
-                                            Toast.makeText(v.getContext(),
+                                            Toast.makeText(
+                                                    v.getContext(),
                                                     "Unable to save event.",
-                                                    Toast.LENGTH_SHORT).show()
+                                                    Toast.LENGTH_SHORT
+                                            ).show()
                                     )
                                     .addOnCompleteListener(task ->
                                             holder.ivSave.setEnabled(true));
                         }
                     })
                     .addOnFailureListener(e -> {
+
                         holder.ivSave.setEnabled(true);
 
-                        Toast.makeText(v.getContext(),
+                        Toast.makeText(
+                                v.getContext(),
                                 "Unable to check saved event.",
-                                Toast.LENGTH_SHORT).show();
+                                Toast.LENGTH_SHORT
+                        ).show();
                     });
         });
     }
 
     // Change the star appearance
-    private void setStar(ImageView imageView, boolean isSaved) {
+    private void setStar(
+            ImageView imageView,
+            boolean isSaved) {
+
         imageView.setImageResource(
                 isSaved
                         ? android.R.drawable.btn_star_big_on
@@ -214,24 +261,25 @@ public class EventAdapter
         );
 
         imageView.setColorFilter(isSaved ? PURPLE : GREY);
+
         imageView.setContentDescription(
                 isSaved ? "Unsave event" : "Save event");
     }
 
-    // Read the saved state from Firestore
+    // Read saved state from Firestore
     private void checkSavedStatus(
             EventViewHolder holder,
             Event event) {
 
-        // Always reset recycled cards first
+        // Reset recycled cards
         setStar(holder.ivSave, false);
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
         String eventId = event.getEventId();
 
-        if (currentUser == null ||
-                eventId == null ||
-                eventId.isEmpty()) {
+        if (currentUser == null
+                || eventId == null
+                || eventId.isEmpty()) {
             return;
         }
 
@@ -252,9 +300,10 @@ public class EventAdapter
                         return;
                     }
 
-                    Event currentEvent = eventList.get(currentPosition);
+                    Event currentEvent =
+                            eventList.get(currentPosition);
 
-                    // Make sure this holder still represents the same event
+                    // Ensure this holder still represents the same event
                     if (!eventId.equals(currentEvent.getEventId())) {
                         return;
                     }
@@ -263,7 +312,10 @@ public class EventAdapter
                 });
     }
 
-    private String nonEmpty(String value, String fallback) {
+    private String nonEmpty(
+            String value,
+            String fallback) {
+
         return value == null || value.trim().isEmpty()
                 ? fallback
                 : value.trim();
@@ -285,6 +337,7 @@ public class EventAdapter
         TextView tvEventTime;
         TextView tvEventVenue;
         TextView tvEventCity;
+        TextView tvEventRegistrationCount;
         TextView tvOrganizerName;
         TextView tvOrganizerInitial;
 
@@ -310,6 +363,10 @@ public class EventAdapter
 
             tvEventCity =
                     itemView.findViewById(R.id.tvEventCity);
+
+            tvEventRegistrationCount =
+                    itemView.findViewById(
+                            R.id.tvEventRegistrationCount);
 
             tvOrganizerName =
                     itemView.findViewById(R.id.tvOrganizerName);

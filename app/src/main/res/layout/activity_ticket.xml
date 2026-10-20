@@ -27,7 +27,7 @@
             android:layout_height="48dp"
             android:padding="13dp"
             android:src="@android:drawable/ic_menu_revert"
-            android:tint="#5033D8"
+            app:tint="#5033D8"
             android:contentDescription="Back" />
 
         <TextView

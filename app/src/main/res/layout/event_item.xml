@@ -63,7 +63,7 @@
 
             </LinearLayout>
 
-            <!-- Decorative symbols only; no event image -->
+            <!-- Decorative symbols -->
             <LinearLayout
                 android:layout_width="76dp"
                 android:layout_height="92dp"
@@ -129,6 +129,18 @@
                 android:textColor="#777386"
                 android:textSize="13sp" />
 
+            <!-- Registration count -->
+            <TextView
+                android:id="@+id/tvEventRegistrationCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="0 Registrations"
+                android:textColor="#5033D8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- Divider -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
@@ -179,7 +191,6 @@
                         android:textSize="11sp" />
 
                 </LinearLayout>
-
 
                 <ImageView
                     android:id="@+id/ivSave"

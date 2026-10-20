@@ -1,4 +1,3 @@
-
 package com.la.eventsphere;
 
 import android.app.AlertDialog;
@@ -48,111 +47,191 @@ public class OrganizerEventAdapter
 
         Event event = eventList.get(position);
 
+        // Event category
         holder.tvCategory.setText(
-                event.getCategory() != null ? event.getCategory() : "");
+                event.getCategory() != null
+                        ? event.getCategory()
+                        : "");
 
+        // Event title
         holder.tvTitle.setText(
-                event.getTitle() != null ? event.getTitle() : "Untitled Event");
+                event.getTitle() != null
+                        ? event.getTitle()
+                        : "Untitled Event");
 
-        String date = event.getDate() != null ? event.getDate() : "Date unavailable";
-        String time = event.getTime() != null ? event.getTime() : "";
+        // Event date and time
+        String date = event.getDate() != null
+                ? event.getDate()
+                : "Date unavailable";
+
+        String time = event.getTime() != null
+                ? event.getTime()
+                : "";
 
         holder.tvDate.setText(
-                time.isEmpty() ? date : date + " • " + time);
+                time.isEmpty()
+                        ? date
+                        : date + " • " + time);
 
-        String venue = event.getVenue() != null ? event.getVenue() : "";
-        String city = event.getCity() != null ? event.getCity() : "";
+        // Event venue and city
+        String venue = event.getVenue() != null
+                ? event.getVenue()
+                : "";
+
+        String city = event.getCity() != null
+                ? event.getCity()
+                : "";
 
         holder.tvVenue.setText(
-                city.isEmpty() ? venue :
-                        (venue.isEmpty() ? city : venue + ", " + city));
+                city.isEmpty()
+                        ? venue
+                        : (venue.isEmpty()
+                           ? city
+                           : venue + ", " + city));
 
+        // Registration count
+        int count = event.getRegisteredCount();
+
+        holder.tvRegistrationCount.setText(
+                count + (count == 1
+                        ? " Registration"
+                        : " Registrations"));
+
+        // Edit event
         holder.btnEdit.setOnClickListener(v -> {
+
             String eventId = event.getEventId();
 
             if (eventId == null || eventId.trim().isEmpty()) {
-                Toast.makeText(v.getContext(),
+                Toast.makeText(
+                        v.getContext(),
                         "Event ID is missing.",
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT
+                ).show();
                 return;
             }
 
-            Intent intent = new Intent(v.getContext(), EditEventActivity.class);
+            Intent intent = new Intent(
+                    v.getContext(),
+                    EditEventActivity.class
+            );
+
             intent.putExtra("eventId", eventId);
             v.getContext().startActivity(intent);
         });
 
+        // Delete event
         holder.btnDelete.setOnClickListener(v -> {
+
             String eventId = event.getEventId();
 
             if (eventId == null || eventId.trim().isEmpty()) {
-                Toast.makeText(v.getContext(),
+                Toast.makeText(
+                        v.getContext(),
                         "Event ID is missing.",
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT
+                ).show();
                 return;
             }
 
             new AlertDialog.Builder(v.getContext())
                     .setTitle("Delete Event")
-                    .setMessage("Are you sure you want to delete \""
-                            + event.getTitle() + "\"?")
-                    .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                    .setPositiveButton("Delete", (dialog, which) -> {
-                        deleteEvent(eventId, holder);
-                    })
+                    .setMessage(
+                            "Are you sure you want to delete \""
+                                    + event.getTitle() + "\"?"
+                    )
+                    .setNegativeButton(
+                            "Cancel",
+                            (dialog, which) -> dialog.dismiss()
+                    )
+                    .setPositiveButton(
+                            "Delete",
+                            (dialog, which) ->
+                                    deleteEvent(eventId, holder)
+                    )
                     .show();
         });
     }
 
-    private void deleteEvent(String eventId, EventViewHolder holder) {
+    private void deleteEvent(
+            String eventId,
+            EventViewHolder holder) {
+
         String uid = mAuth.getUid();
 
         if (uid == null) {
-            Toast.makeText(holder.itemView.getContext(),
+            Toast.makeText(
+                    holder.itemView.getContext(),
                     "Please log in again.",
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_SHORT
+            ).show();
             return;
         }
 
-        // Delete only if the current organizer owns this event.
         db.collection("events")
                 .document(eventId)
                 .get()
                 .addOnSuccessListener(document -> {
+
                     if (!document.exists()) {
-                        Toast.makeText(holder.itemView.getContext(),
+                        Toast.makeText(
+                                holder.itemView.getContext(),
                                 "This event no longer exists.",
-                                Toast.LENGTH_SHORT).show();
+                                Toast.LENGTH_SHORT
+                        ).show();
                         return;
                     }
 
-                    String organizerId = document.getString("organizerId");
+                    // Verify event ownership.
+                    // Firestore field: organizerID
+                    String organizerId =
+                            document.getString("organizerID");
 
-                    if (organizerId == null || !organizerId.equals(uid)) {
-                        Toast.makeText(holder.itemView.getContext(),
+                    if (organizerId == null
+                            || !organizerId.equals(uid)) {
+
+                        Toast.makeText(
+                                holder.itemView.getContext(),
                                 "You cannot delete this event.",
-                                Toast.LENGTH_LONG).show();
+                                Toast.LENGTH_LONG
+                        ).show();
                         return;
                     }
 
+                    // Delete event from Firestore
                     db.collection("events")
                             .document(eventId)
                             .delete()
-                            .addOnSuccessListener(unused ->
-                                    Toast.makeText(
-                                            holder.itemView.getContext(),
-                                            "Event deleted successfully.",
-                                            Toast.LENGTH_SHORT).show())
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(
-                                            holder.itemView.getContext(),
-                                            "Unable to delete event.",
-                                            Toast.LENGTH_LONG).show());
+                            .addOnSuccessListener(unused -> {
+
+                                Toast.makeText(
+                                        holder.itemView.getContext(),
+                                        "Event deleted successfully.",
+                                        Toast.LENGTH_SHORT
+                                ).show();
+
+                            })
+                            .addOnFailureListener(e -> {
+
+                                Toast.makeText(
+                                        holder.itemView.getContext(),
+                                        "Unable to delete event: "
+                                                + e.getMessage(),
+                                        Toast.LENGTH_LONG
+                                ).show();
+
+                            });
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(holder.itemView.getContext(),
-                                "Unable to verify event ownership.",
-                                Toast.LENGTH_LONG).show());
+                .addOnFailureListener(e -> {
+
+                    Toast.makeText(
+                            holder.itemView.getContext(),
+                            "Unable to verify event ownership: "
+                                    + e.getMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+
+                });
     }
 
     @Override
@@ -160,24 +239,41 @@ public class OrganizerEventAdapter
         return eventList.size();
     }
 
-    static class EventViewHolder extends RecyclerView.ViewHolder {
+    static class EventViewHolder
+            extends RecyclerView.ViewHolder {
 
         TextView tvCategory;
         TextView tvTitle;
         TextView tvDate;
         TextView tvVenue;
+        TextView tvRegistrationCount;
+
         Button btnEdit;
         Button btnDelete;
 
         EventViewHolder(@NonNull View itemView) {
             super(itemView);
 
-            tvCategory = itemView.findViewById(R.id.tvOrganizerEventCategory);
-            tvTitle = itemView.findViewById(R.id.tvOrganizerEventTitle);
-            tvDate = itemView.findViewById(R.id.tvOrganizerEventDate);
-            tvVenue = itemView.findViewById(R.id.tvOrganizerEventVenue);
-            btnEdit = itemView.findViewById(R.id.btnEditOrganizerEvent);
-            btnDelete = itemView.findViewById(R.id.btnDeleteOrganizerEvent);
+            tvCategory = itemView.findViewById(
+                    R.id.tvOrganizerEventCategory);
+
+            tvTitle = itemView.findViewById(
+                    R.id.tvOrganizerEventTitle);
+
+            tvDate = itemView.findViewById(
+                    R.id.tvOrganizerEventDate);
+
+            tvVenue = itemView.findViewById(
+                    R.id.tvOrganizerEventVenue);
+
+            tvRegistrationCount = itemView.findViewById(
+                    R.id.tvOrganizerRegistrationCount);
+
+            btnEdit = itemView.findViewById(
+                    R.id.btnEditOrganizerEvent);
+
+            btnDelete = itemView.findViewById(
+                    R.id.btnDeleteOrganizerEvent);
         }
     }
 }
