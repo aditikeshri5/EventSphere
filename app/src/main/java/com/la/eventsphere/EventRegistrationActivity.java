@@ -1,5 +1,6 @@
 package com.la.eventsphere;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -15,7 +16,6 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.WriteBatch;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -65,11 +65,9 @@ public class EventRegistrationActivity extends AppCompatActivity {
         FirebaseUser user = auth.getCurrentUser();
 
         if (user == null) {
-            Toast.makeText(
-                    this,
+            Toast.makeText(this,
                     "Please log in to register.",
-                    Toast.LENGTH_LONG
-            ).show();
+                    Toast.LENGTH_LONG).show();
             finish();
             return;
         }
@@ -82,11 +80,9 @@ public class EventRegistrationActivity extends AppCompatActivity {
         eventId = getIntent().getStringExtra("eventId");
 
         if (eventId == null || eventId.trim().isEmpty()) {
-            Toast.makeText(
-                    this,
+            Toast.makeText(this,
                     "Event information is missing. Please open the event again.",
-                    Toast.LENGTH_LONG
-            ).show();
+                    Toast.LENGTH_LONG).show();
             finish();
             return;
         }
@@ -199,11 +195,9 @@ public class EventRegistrationActivity extends AppCompatActivity {
                     }
 
                     if (!event.exists()) {
-                        Toast.makeText(
-                                this,
+                        Toast.makeText(this,
                                 "This event is no longer available.",
-                                Toast.LENGTH_LONG
-                        ).show();
+                                Toast.LENGTH_LONG).show();
                         finish();
                         return;
                     }
@@ -273,12 +267,10 @@ public class EventRegistrationActivity extends AppCompatActivity {
                     tvRegistrationEventVenue.setText("");
                     btnConfirmRegistration.setEnabled(false);
 
-                    Toast.makeText(
-                            this,
+                    Toast.makeText(this,
                             "Could not load event details: "
                                     + e.getLocalizedMessage(),
-                            Toast.LENGTH_LONG
-                    ).show();
+                            Toast.LENGTH_LONG).show();
                 });
     }
 
@@ -321,12 +313,10 @@ public class EventRegistrationActivity extends AppCompatActivity {
                     registrationChecked = false;
                     btnConfirmRegistration.setEnabled(false);
 
-                    Toast.makeText(
-                            this,
+                    Toast.makeText(this,
                             "Could not check registration. "
                                     + "Please check your Firestore rules.",
-                            Toast.LENGTH_LONG
-                    ).show();
+                            Toast.LENGTH_LONG).show();
                 });
     }
 
@@ -336,38 +326,30 @@ public class EventRegistrationActivity extends AppCompatActivity {
         }
 
         if (auth.getCurrentUser() == null) {
-            Toast.makeText(
-                    this,
+            Toast.makeText(this,
                     "Please log in to register.",
-                    Toast.LENGTH_LONG
-            ).show();
+                    Toast.LENGTH_LONG).show();
             return;
         }
 
         if (!eventLoaded || eventDocument == null) {
-            Toast.makeText(
-                    this,
+            Toast.makeText(this,
                     "Event details are still loading. Please wait.",
-                    Toast.LENGTH_SHORT
-            ).show();
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (!registrationChecked) {
-            Toast.makeText(
-                    this,
+            Toast.makeText(this,
                     "Please wait while we verify your registration.",
-                    Toast.LENGTH_SHORT
-            ).show();
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (alreadyRegistered) {
-            Toast.makeText(
-                    this,
+            Toast.makeText(this,
                     "You have already registered for this event.",
-                    Toast.LENGTH_SHORT
-            ).show();
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -385,8 +367,6 @@ public class EventRegistrationActivity extends AppCompatActivity {
         DocumentReference registrationRef =
                 getRegistrationReference();
 
-        // Read first, then create the registration and increment the
-        // event count together in one atomic Firestore transaction.
         db.runTransaction(transaction -> {
 
             DocumentSnapshot currentEvent =
@@ -418,9 +398,18 @@ public class EventRegistrationActivity extends AppCompatActivity {
                 );
             }
 
+            // Reuse the existing Ticket ID if available.
+            // Otherwise, use the registration document ID.
+            String ticketId = existingRegistration.getString("ticketId");
+
+            if (ticketId == null || ticketId.trim().isEmpty()) {
+                ticketId = registrationRef.getId();
+            }
+
             Map<String, Object> registration = new HashMap<>();
 
             registration.put("eventId", eventId);
+            registration.put("ticketId", ticketId);
             registration.put("eventTitle",
                     value(currentEvent, "title"));
             registration.put("eventDate",
@@ -446,8 +435,7 @@ public class EventRegistrationActivity extends AppCompatActivity {
 
             transaction.set(registrationRef, registration);
 
-            // Increment registeredCount only when this registration
-            // is created successfully.
+            // Increment the count for this successful registration.
             transaction.update(
                     eventRef,
                     "registeredCount",
@@ -464,16 +452,21 @@ public class EventRegistrationActivity extends AppCompatActivity {
             registrationInProgress = false;
             alreadyRegistered = true;
 
-            btnConfirmRegistration.setText("Registered ✓");
-            btnConfirmRegistration.setEnabled(false);
-
-            Toast.makeText(
-                    this,
+            Toast.makeText(this,
                     "Registration successful!",
-                    Toast.LENGTH_LONG
-            ).show();
+                    Toast.LENGTH_SHORT).show();
 
+            // Open the ticket after the registration is saved.
+            Intent intent = new Intent(
+                    EventRegistrationActivity.this,
+                    TicketActivity.class
+            );
+
+            intent.putExtra("registrationId", registrationRef.getId());
+
+            startActivity(intent);
             finish();
+
         }).addOnFailureListener(e -> {
             if (isFinishing() || isDestroyed()) {
                 return;
@@ -481,21 +474,17 @@ public class EventRegistrationActivity extends AppCompatActivity {
 
             registrationInProgress = false;
 
-            // If a previous attempt or another device registered this
-            // user, refresh the button state instead of incrementing again.
             checkExistingRegistration();
 
             String message = e.getLocalizedMessage();
 
-            Toast.makeText(
-                    this,
+            Toast.makeText(this,
                     "Registration failed: "
                             + (message == null
                             ? "Please try again."
                             : message)
                             + " Check Firestore rules if permission is denied.",
-                    Toast.LENGTH_LONG
-            ).show();
+                    Toast.LENGTH_LONG).show();
         });
     }
 

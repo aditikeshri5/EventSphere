@@ -7,6 +7,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class TicketActivity extends AppCompatActivity {
@@ -15,15 +18,17 @@ public class TicketActivity extends AppCompatActivity {
 
     private TextView tvEventTitle;
     private TextView tvEventDate;
+    private TextView tvEventTime;
     private TextView tvEventVenue;
+    private TextView tvEventCity;
 
     private TextView tvUserName;
     private TextView tvUserEmail;
-
     private TextView tvRegistrationId;
     private TextView tvStatus;
 
     private FirebaseFirestore db;
+    private FirebaseAuth auth;
 
     private String registrationId;
 
@@ -35,58 +40,50 @@ public class TicketActivity extends AppCompatActivity {
         initializeViews();
 
         db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
 
-        registrationId =
-                getIntent().getStringExtra("registrationId");
+        registrationId = getIntent().getStringExtra("registrationId");
 
-        if (registrationId == null
-                || registrationId.isEmpty()) {
+        btnBack.setOnClickListener(v -> finish());
 
-            Toast.makeText(
-                    this,
-                    "Unable to load ticket.",
-                    Toast.LENGTH_LONG
-            ).show();
-
+        if (registrationId == null || registrationId.trim().isEmpty()) {
+            Toast.makeText(this,
+                    "Ticket ID is missing.",
+                    Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        tvRegistrationId.setText(registrationId);
+        FirebaseUser currentUser = auth.getCurrentUser();
 
-        btnBack.setOnClickListener(v -> finish());
+        if (currentUser == null) {
+            Toast.makeText(this,
+                    "Please log in to view your ticket.",
+                    Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
 
-        loadTicket();
+        loadTicket(currentUser.getUid());
     }
 
     private void initializeViews() {
 
-        btnBack =
-                findViewById(R.id.btnBack);
+        btnBack = findViewById(R.id.btnBack);
 
-        tvEventTitle =
-                findViewById(R.id.tvEventTitle);
+        tvEventTitle = findViewById(R.id.tvEventTitle);
+        tvEventDate = findViewById(R.id.tvEventDate);
+        tvEventTime = findViewById(R.id.tvEventTime);
+        tvEventVenue = findViewById(R.id.tvEventVenue);
+        tvEventCity = findViewById(R.id.tvEventCity);
 
-        tvEventDate =
-                findViewById(R.id.tvEventDate);
-
-        tvEventVenue =
-                findViewById(R.id.tvEventVenue);
-
-        tvUserName =
-                findViewById(R.id.tvUserName);
-
-        tvUserEmail =
-                findViewById(R.id.tvUserEmail);
-
-        tvRegistrationId =
-                findViewById(R.id.tvRegistrationId);
-
-        tvStatus =
-                findViewById(R.id.tvStatus);
+        tvUserName = findViewById(R.id.tvUserName);
+        tvUserEmail = findViewById(R.id.tvUserEmail);
+        tvRegistrationId = findViewById(R.id.tvRegistrationId);
+        tvStatus = findViewById(R.id.tvStatus);
     }
 
-    private void loadTicket() {
+    private void loadTicket(String userId) {
 
         db.collection("registrations")
                 .document(registrationId)
@@ -94,95 +91,99 @@ public class TicketActivity extends AppCompatActivity {
                 .addOnSuccessListener(document -> {
 
                     if (!document.exists()) {
+                        showErrorAndFinish("Ticket not found.");
+                        return;
+                    }
 
-                        Toast.makeText(
-                                TicketActivity.this,
-                                "Ticket not found.",
-                                Toast.LENGTH_LONG
-                        ).show();
+                    String registeredUserId =
+                            document.getString("userId");
 
-                        finish();
+                    if (registeredUserId == null ||
+                            !registeredUserId.equals(userId)) {
+
+                        showErrorAndFinish(
+                                "You are not authorized to view this ticket."
+                        );
                         return;
                     }
 
                     displayTicket(document);
                 })
-                .addOnFailureListener(e -> {
-
-                    Toast.makeText(
-                            TicketActivity.this,
-                            "Unable to load ticket.",
-                            Toast.LENGTH_LONG
-                    ).show();
-                });
+                .addOnFailureListener(e ->
+                        Toast.makeText(
+                                TicketActivity.this,
+                                "Unable to load ticket. Please try again.",
+                                Toast.LENGTH_LONG
+                        ).show()
+                );
     }
 
-    private void displayTicket(
-            com.google.firebase.firestore.DocumentSnapshot document) {
+    private void displayTicket(DocumentSnapshot document) {
 
-        String eventTitle =
-                document.getString("eventTitle");
+        String eventTitle = document.getString("eventTitle");
+        String eventDate = document.getString("eventDate");
+        String eventTime = document.getString("eventTime");
+        String eventVenue = document.getString("eventVenue");
+        String eventCity = document.getString("eventCity");
 
-        String eventDate =
-                document.getString("eventDate");
+        String userName = document.getString("userName");
+        String userEmail = document.getString("userEmail");
+        String status = document.getString("status");
 
-        String eventVenue =
-                document.getString("eventVenue");
+        // Use saved Ticket ID, or registration document ID.
+        String ticketId = document.getString("ticketId");
 
-        String userName =
-                document.getString("userName");
-
-        String userEmail =
-                document.getString("userEmail");
-
-        String status =
-                document.getString("status");
+        if (ticketId == null || ticketId.trim().isEmpty()) {
+            ticketId = document.getId();
+        }
 
         tvEventTitle.setText(
-                eventTitle != null
-                        ? eventTitle
-                        : "Event"
+                eventTitle != null ? eventTitle : "Event"
         );
 
         tvEventDate.setText(
-                eventDate != null
-                        ? "📅 " + eventDate
-                        : "📅 Date not available"
+                "Date: " + (eventDate != null
+                        ? eventDate : "Not available")
+        );
+
+        tvEventTime.setText(
+                "Time: " + (eventTime != null
+                        ? eventTime : "Not available")
         );
 
         tvEventVenue.setText(
-                eventVenue != null
-                        ? "📍 " + eventVenue
-                        : "📍 Venue not available"
+                "Venue: " + (eventVenue != null
+                        ? eventVenue : "Not available")
+        );
+
+        tvEventCity.setText(
+                "City: " + (eventCity != null
+                        ? eventCity : "Not available")
         );
 
         tvUserName.setText(
-                userName != null
-                        ? userName
-                        : "User"
+                userName != null ? userName : "User"
         );
 
         tvUserEmail.setText(
-                userEmail != null
-                        ? userEmail
-                        : ""
+                userEmail != null ? userEmail : ""
         );
 
-        tvRegistrationId.setText(
-                registrationId
+        tvRegistrationId.setText(ticketId);
+
+        tvStatus.setText(
+                status != null ? status.toUpperCase() : "CONFIRMED"
         );
+    }
 
-        if (status != null) {
+    private void showErrorAndFinish(String message) {
 
-            tvStatus.setText(
-                    status.toUpperCase()
-            );
+        Toast.makeText(
+                this,
+                message,
+                Toast.LENGTH_LONG
+        ).show();
 
-        } else {
-
-            tvStatus.setText(
-                    "CONFIRMED"
-            );
-        }
+        finish();
     }
 }
