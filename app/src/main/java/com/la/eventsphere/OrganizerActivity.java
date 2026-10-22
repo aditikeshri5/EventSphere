@@ -1,3 +1,4 @@
+
 package com.la.eventsphere;
 
 import android.os.Bundle;
@@ -53,6 +54,7 @@ public class OrganizerActivity extends AppCompatActivity {
     }
 
     private void initializeViews() {
+
         navDashboard = findViewById(R.id.navOrganizerDashboard);
         navEvents = findViewById(R.id.navOrganizerEvents);
         navRegistrations = findViewById(R.id.navOrganizerRegistrations);
@@ -70,6 +72,7 @@ public class OrganizerActivity extends AppCompatActivity {
     }
 
     private void setupNavigation() {
+
         navDashboard.setOnClickListener(v -> {
             openFragment(new OrganizerDashboardFragment());
             selectNavigation(navDashboard);
@@ -92,6 +95,7 @@ public class OrganizerActivity extends AppCompatActivity {
     }
 
     private void openFragment(Fragment fragment) {
+
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.organizerFragmentContainer, fragment)
@@ -99,6 +103,7 @@ public class OrganizerActivity extends AppCompatActivity {
     }
 
     private void selectNavigation(LinearLayout selectedNav) {
+
         iconDashboard.setColorFilter(GREY);
         iconEvents.setColorFilter(GREY);
         iconRegistrations.setColorFilter(GREY);
@@ -115,21 +120,53 @@ public class OrganizerActivity extends AppCompatActivity {
         textProfile.setTypeface(null, Typeface.NORMAL);
 
         if (selectedNav == navDashboard) {
+
             iconDashboard.setColorFilter(PURPLE);
             textDashboard.setTextColor(PURPLE);
             textDashboard.setTypeface(null, Typeface.BOLD);
+
         } else if (selectedNav == navEvents) {
+
             iconEvents.setColorFilter(PURPLE);
             textEvents.setTextColor(PURPLE);
             textEvents.setTypeface(null, Typeface.BOLD);
+
         } else if (selectedNav == navRegistrations) {
+
             iconRegistrations.setColorFilter(PURPLE);
             textRegistrations.setTextColor(PURPLE);
             textRegistrations.setTypeface(null, Typeface.BOLD);
+
         } else if (selectedNav == navProfile) {
+
             iconProfile.setColorFilter(PURPLE);
             textProfile.setTextColor(PURPLE);
             textProfile.setTypeface(null, Typeface.BOLD);
         }
     }
+
+    public void logout() {
+
+        // Clear the saved SharedPreferences session
+        SessionManager sessionManager = new SessionManager(this);
+        sessionManager.clearSession();
+
+        // Sign out from Firebase Authentication
+        com.google.firebase.auth.FirebaseAuth
+                .getInstance()
+                .signOut();
+
+        // Return to the role-selection screen
+        android.content.Intent intent =
+                new android.content.Intent(this, MainActivity.class);
+
+        intent.addFlags(
+                android.content.Intent.FLAG_ACTIVITY_NEW_TASK |
+                        android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+        );
+
+        startActivity(intent);
+        finish();
+    }
+
 }

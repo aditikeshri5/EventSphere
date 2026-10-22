@@ -1,3 +1,4 @@
+
 package com.la.eventsphere;
 
 import android.content.Intent;
@@ -60,7 +61,7 @@ public class ProfileFragment extends Fragment {
                 false
         );
 
-        // Initialize existing profile views
+        // Initialize profile views
         tvProfileAvatar = view.findViewById(R.id.tvProfileAvatar);
         tvProfileName = view.findViewById(R.id.tvProfileName);
         tvProfileEmail = view.findViewById(R.id.tvProfileEmail);
@@ -78,22 +79,21 @@ public class ProfileFragment extends Fragment {
         btnEditInterests =
                 view.findViewById(R.id.btnEditInterests);
 
-        btnLogout =
-                view.findViewById(R.id.btnLogout);
+        btnLogout = view.findViewById(R.id.btnLogout);
 
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // Load user profile
+        // Load profile
         loadProfile();
 
-        // Edit profile button
+        // Edit profile
         btnEditUserProfile.setOnClickListener(v ->
                 showEditProfileDialog()
         );
 
-        // Keep existing Edit Interests functionality
+        // Edit interests
         btnEditInterests.setOnClickListener(v -> {
             Intent intent = new Intent(
                     requireContext(),
@@ -102,13 +102,13 @@ public class ProfileFragment extends Fragment {
             startActivity(intent);
         });
 
-        // Keep existing Logout functionality
+        // Logout
         btnLogout.setOnClickListener(v -> logoutUser());
 
         return view;
     }
 
-    // Load profile information from Firestore
+    // Load user profile from Firestore
     private void loadProfile() {
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -166,7 +166,7 @@ public class ProfileFragment extends Fragment {
                     tvProfileEmail.setText(email);
                     tvUserAccountEmail.setText(email);
 
-                    // Phone field uses the exact Firestore key "Phone"
+                    // Phone
                     String phone = document.getString("Phone");
 
                     if (phone == null || phone.trim().isEmpty()) {
@@ -351,22 +351,31 @@ public class ProfileFragment extends Fragment {
         dialog.show();
     }
 
-    // Logout
+    // Logout user
     private void logoutUser() {
 
+        // Clear SharedPreferences
+        SessionManager sessionManager =
+                new SessionManager(requireContext());
+
+        sessionManager.clearSession();
+
+        // Sign out from Firebase
         mAuth.signOut();
 
+        // Navigate to MainActivity
         Intent intent = new Intent(
-                requireContext(),
-                LoginActivity.class
+                requireActivity(),
+                MainActivity.class
         );
 
         intent.addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK
-                        | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                Intent.FLAG_ACTIVITY_NEW_TASK |
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
         );
 
         startActivity(intent);
+        requireActivity().finish();
     }
 
     // Refresh profile when returning from Edit Interests

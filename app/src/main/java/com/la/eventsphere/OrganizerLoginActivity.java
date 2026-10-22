@@ -1,9 +1,9 @@
 
 package com.la.eventsphere;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -19,19 +19,22 @@ public class OrganizerLoginActivity extends AppCompatActivity {
 
     private EditText etOrganizerEmail, etOrganizerPassword;
     private Button btnOrganizerLogin;
+
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_organizer_login);
 
-        // Initialize Firebase
+        // Initialize Firebase and session manager
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        sessionManager = new SessionManager(this);
 
-        // Connect XML views
+        // Connect XML elements
         etOrganizerEmail = findViewById(R.id.etOrganizerEmail);
         etOrganizerPassword = findViewById(R.id.etOrganizerPassword);
         btnOrganizerLogin = findViewById(R.id.btnOrganizerLogin);
@@ -40,20 +43,19 @@ public class OrganizerLoginActivity extends AppCompatActivity {
         TextView tvOrganizerRegister =
                 findViewById(R.id.tvOrganizerRegister);
 
-        // Back button: close this activity and return immediately
+        // Back button: return to the previous screen
         btnBack.setOnClickListener(v -> finish());
 
-        // Organizer login
+        // Organizer login button
         btnOrganizerLogin.setOnClickListener(v -> loginOrganizer());
 
-        // Open organizer registration screen
+        // Open organizer registration
         tvOrganizerRegister.setOnClickListener(v -> {
-            startActivity(
-                    new android.content.Intent(
-                            OrganizerLoginActivity.this,
-                            OrganizerRegistrationActivity.class
-                    )
+            Intent intent = new Intent(
+                    OrganizerLoginActivity.this,
+                    OrganizerRegistrationActivity.class
             );
+            startActivity(intent);
         });
     }
 
@@ -116,24 +118,36 @@ public class OrganizerLoginActivity extends AppCompatActivity {
 
                     if (document.exists()) {
 
+                        // Save the organizer session only after
+                        // verifying the organizer's Firestore profile.
+                        sessionManager.saveSession("organizer");
+
                         Toast.makeText(
                                 OrganizerLoginActivity.this,
                                 "Welcome, Organizer!",
                                 Toast.LENGTH_SHORT
                         ).show();
 
-                        android.content.Intent intent =
-                                new android.content.Intent(
-                                        OrganizerLoginActivity.this,
-                                        OrganizerActivity.class
-                                );
+                        Intent intent = new Intent(
+                                OrganizerLoginActivity.this,
+                                OrganizerActivity.class
+                        );
+
+                        // Prevent Back from returning to login screens.
+                        intent.addFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK |
+                                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        );
 
                         startActivity(intent);
                         finish();
 
                     } else {
 
+                        // The account exists in Firebase Authentication,
+                        // but it is not registered as an organizer.
                         mAuth.signOut();
+                        sessionManager.clearSession();
 
                         showLoginError(
                                 "This account is not registered as an organizer."
@@ -142,8 +156,8 @@ public class OrganizerLoginActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
 
-                    mAuth.signOut();
-
+                    // A Firestore/network error is not proof that
+                    // the account is invalid, so don't sign out.
                     showLoginError(
                             "Unable to verify organizer access. Please try again."
                     );

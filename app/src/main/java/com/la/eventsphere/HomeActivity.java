@@ -1,3 +1,4 @@
+
 package com.la.eventsphere;
 
 import android.os.Bundle;
@@ -64,31 +65,23 @@ public class HomeActivity extends AppCompatActivity {
     private void setupNavigation() {
 
         navHome.setOnClickListener(v -> {
-
             openFragment(new HomeFragment());
             selectNavigation(navHome);
-
         });
 
         navSaved.setOnClickListener(v -> {
-
             openFragment(new SavedFragment());
             selectNavigation(navSaved);
-
         });
 
         navMyEvents.setOnClickListener(v -> {
-
             openFragment(new MyEventsFragment());
             selectNavigation(navMyEvents);
-
         });
 
         navProfile.setOnClickListener(v -> {
-
             openFragment(new ProfileFragment());
             selectNavigation(navProfile);
-
         });
     }
 
@@ -144,4 +137,30 @@ public class HomeActivity extends AppCompatActivity {
             textProfile.setTypeface(null, android.graphics.Typeface.BOLD);
         }
     }
+
+
+    public void logout() {
+
+        // Clear the saved SharedPreferences session
+        SessionManager sessionManager = new SessionManager(this);
+        sessionManager.clearSession();
+
+        // Sign out from Firebase Authentication
+        com.google.firebase.auth.FirebaseAuth
+                .getInstance()
+                .signOut();
+
+        // Return to the role-selection screen
+        android.content.Intent intent =
+                new android.content.Intent(this, MainActivity.class);
+
+        intent.addFlags(
+                android.content.Intent.FLAG_ACTIVITY_NEW_TASK |
+                        android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+        );
+
+        startActivity(intent);
+        finish();
+    }
+
 }

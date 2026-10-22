@@ -1,8 +1,8 @@
+
 package com.la.eventsphere;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,24 +25,26 @@ public class LoginActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Initialize Firebase
+        // Initialize Firebase and session manager
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        sessionManager = new SessionManager(this);
 
         // Connect XML elements
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
 
-        // Back button: return to role selection
         TextView btnBackToMain = findViewById(R.id.btnBackToMain);
 
+        // Back button: return to role selection
         btnBackToMain.setOnClickListener(v -> {
             Intent intent = new Intent(
                     LoginActivity.this,
@@ -72,14 +74,12 @@ public class LoginActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString();
 
-        // Validate email
         if (TextUtils.isEmpty(email)) {
             etEmail.setError("Enter your email");
             etEmail.requestFocus();
             return;
         }
 
-        // Validate password
         if (TextUtils.isEmpty(password)) {
             etPassword.setError("Enter your password");
             etPassword.requestFocus();
@@ -88,20 +88,15 @@ public class LoginActivity extends AppCompatActivity {
 
         btnLogin.setEnabled(false);
 
-        // Firebase Authentication
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
 
                     if (task.isSuccessful()) {
 
-                        FirebaseUser firebaseUser =
-                                mAuth.getCurrentUser();
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
 
                         if (firebaseUser != null) {
-                            String uid = firebaseUser.getUid();
-
-                            // Check Firestore user profile
-                            checkUserProfile(uid);
+                            checkUserProfile(firebaseUser.getUid());
                         } else {
                             showLoginError(
                                     "Unable to retrieve your account."
@@ -110,7 +105,8 @@ public class LoginActivity extends AppCompatActivity {
 
                     } else {
 
-                        String errorMessage = "Login failed.";
+                        String errorMessage =
+                                "Login failed. Please check your credentials.";
 
                         if (task.getException() != null) {
                             errorMessage =
@@ -127,65 +123,69 @@ public class LoginActivity extends AppCompatActivity {
         db.collection("users")
                 .document(uid)
                 .get()
-                .addOnCompleteListener(task -> {
+                .addOnSuccessListener(document -> {
 
-                    if (task.isSuccessful()) {
+                    if (document.exists()) {
 
-                        DocumentSnapshot document = task.getResult();
+                        // Save the regular-user session only after
+                        // confirming that the Firestore profile exists.
+                        sessionManager.saveSession("user");
 
-                        if (document != null && document.exists()) {
-
-                            // User profile exists
-                            checkInterests(document);
-
-                        } else {
-
-                            // Account has no user profile
-                            mAuth.signOut();
-
-                            showLoginError(
-                                    "No user profile found. Please register."
-                            );
-                        }
+                        checkInterests(document);
 
                     } else {
 
+                        // This account has no regular-user profile.
                         mAuth.signOut();
+                        sessionManager.clearSession();
 
                         showLoginError(
-                                "Unable to check your profile. Please try again."
+                                "No user profile found. Please register."
                         );
                     }
+                })
+                .addOnFailureListener(e -> {
+
+                    // Keep the Firebase session so the user can retry.
+                    // Do not erase the session because of a network error.
+                    showLoginError(
+                            "Unable to check your profile. Please try again."
+                    );
                 });
     }
 
     private void checkInterests(DocumentSnapshot document) {
 
-        List<String> interests =
-                (List<String>) document.get("interests");
+        List<String> interests = (List<String>) document.get("interests");
+
+        Intent intent;
 
         if (interests == null || interests.size() < 3) {
 
-            // User has not completed interest selection
-            Intent intent = new Intent(
+            // First-time users or users who haven't selected
+            // their three interests go to interest selection.
+            intent = new Intent(
                     LoginActivity.this,
                     InterestActivity.class
             );
 
-            startActivity(intent);
-            finish();
-
         } else {
 
-            // User has already selected three interests
-            Intent intent = new Intent(
+            // Users with three interests go to the home dashboard.
+            intent = new Intent(
                     LoginActivity.this,
                     HomeActivity.class
             );
-
-            startActivity(intent);
-            finish();
         }
+
+        // Remove login and earlier screens from the back stack.
+        intent.addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK |
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+        );
+
+        startActivity(intent);
+        finish();
     }
 
     private void showLoginError(String message) {

@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="#F8F7FC">
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:id="@+id/homeScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -28,9 +28,7 @@
             android:paddingEnd="20dp"
             android:paddingBottom="24dp">
 
-            <!-- ========================= -->
             <!-- GREETING -->
-            <!-- ========================= -->
 
             <TextView
                 android:id="@+id/tvGreetingSmall"
@@ -50,10 +48,7 @@
                 android:textSize="23sp"
                 android:textStyle="bold" />
 
-
-            <!-- ========================= -->
             <!-- SEARCH -->
-            <!-- ========================= -->
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/searchCard"
@@ -77,7 +72,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:src="@android:drawable/ic_menu_search"
-                        android:tint="#777777"
+                        app:tint="#777777"
                         android:contentDescription="Search" />
 
                     <TextView
@@ -93,10 +88,7 @@
 
             </androidx.cardview.widget.CardView>
 
-
-            <!-- ========================= -->
             <!-- CATEGORY TITLE -->
-            <!-- ========================= -->
 
             <TextView
                 android:id="@+id/tvCategoriesTitle"
@@ -108,10 +100,7 @@
                 android:textSize="19sp"
                 android:textStyle="bold" />
 
-
-            <!-- ========================= -->
-            <!-- CATEGORY SCROLL -->
-            <!-- ========================= -->
+            <!-- HORIZONTAL CATEGORY SCROLL -->
 
             <HorizontalScrollView
                 android:id="@+id/categoryScroll"
@@ -126,7 +115,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
-
 
                     <!-- ALL -->
 
@@ -153,7 +141,6 @@
 
                     </androidx.cardview.widget.CardView>
 
-
                     <!-- MUSIC -->
 
                     <androidx.cardview.widget.CardView
@@ -177,7 +164,6 @@
                             android:textSize="14sp" />
 
                     </androidx.cardview.widget.CardView>
-
 
                     <!-- SPORTS -->
 
@@ -203,7 +189,6 @@
 
                     </androidx.cardview.widget.CardView>
 
-
                     <!-- CULTURE -->
 
                     <androidx.cardview.widget.CardView
@@ -227,7 +212,6 @@
                             android:textSize="14sp" />
 
                     </androidx.cardview.widget.CardView>
-
 
                     <!-- HACKATHONS -->
 
@@ -253,7 +237,6 @@
 
                     </androidx.cardview.widget.CardView>
 
-
                     <!-- WORKSHOPS -->
 
                     <androidx.cardview.widget.CardView
@@ -277,7 +260,6 @@
                             android:textSize="14sp" />
 
                     </androidx.cardview.widget.CardView>
-
 
                     <!-- COMPETITIONS -->
 
@@ -303,7 +285,6 @@
 
                     </androidx.cardview.widget.CardView>
 
-
                     <!-- FESTS -->
 
                     <androidx.cardview.widget.CardView
@@ -327,7 +308,6 @@
                             android:textSize="14sp" />
 
                     </androidx.cardview.widget.CardView>
-
 
                     <!-- CONCERTS -->
 
@@ -353,7 +333,6 @@
 
                     </androidx.cardview.widget.CardView>
 
-
                     <!-- CAREER -->
 
                     <androidx.cardview.widget.CardView
@@ -378,13 +357,13 @@
 
                     </androidx.cardview.widget.CardView>
 
-
                     <!-- ARTS -->
 
                     <androidx.cardview.widget.CardView
                         android:id="@+id/categoryArts"
                         android:layout_width="wrap_content"
                         android:layout_height="42dp"
+                        android:layout_marginEnd="0dp"
                         app:cardBackgroundColor="@android:color/white"
                         app:cardCornerRadius="21dp"
                         app:cardElevation="0dp">
@@ -406,10 +385,7 @@
 
             </HorizontalScrollView>
 
-
-            <!-- ========================= -->
             <!-- EVENTS TITLE -->
-            <!-- ========================= -->
 
             <TextView
                 android:id="@+id/tvEventsTitle"
@@ -430,10 +406,7 @@
                 android:textColor="#777777"
                 android:textSize="14sp" />
 
-
-            <!-- ========================= -->
-            <!-- EVENTS RECYCLER VIEW -->
-            <!-- ========================= -->
+            <!-- EVENTS LIST -->
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerEvents"
@@ -443,10 +416,7 @@
                 android:nestedScrollingEnabled="false"
                 android:overScrollMode="never" />
 
-
-            <!-- ========================= -->
             <!-- EMPTY STATE -->
-            <!-- ========================= -->
 
             <TextView
                 android:id="@+id/tvNoEvents"
@@ -461,6 +431,6 @@
 
         </LinearLayout>
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

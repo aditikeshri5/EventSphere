@@ -1,3 +1,4 @@
+
 package com.la.eventsphere;
 
 import android.app.AlertDialog;
@@ -30,6 +31,7 @@ public class OrganizerProfileFragment extends Fragment {
 
     private TextView tvAvatar, tvProfileName, tvFullName;
     private TextView tvEmail, tvOrganization, tvPhone;
+
     private Button btnEditProfile, btnLogout;
 
     private FirebaseAuth mAuth;
@@ -55,6 +57,7 @@ public class OrganizerProfileFragment extends Fragment {
                 false
         );
 
+        // Connect XML views
         tvAvatar = view.findViewById(R.id.tvOrganizerProfileAvatar);
         tvProfileName = view.findViewById(R.id.tvOrganizerProfileName);
         tvFullName = view.findViewById(R.id.tvOrganizerFullName);
@@ -65,18 +68,23 @@ public class OrganizerProfileFragment extends Fragment {
         btnEditProfile = view.findViewById(R.id.btnEditOrganizerProfile);
         btnLogout = view.findViewById(R.id.btnOrganizerLogout);
 
+        // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
+        // Button listeners
         btnEditProfile.setOnClickListener(v -> showEditDialog());
         btnLogout.setOnClickListener(v -> logoutOrganizer());
 
+        // Load organizer profile
         loadOrganizerProfile();
 
         return view;
     }
 
+    // Load organizer profile from Firestore
     private void loadOrganizerProfile() {
+
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user == null) {
@@ -88,7 +96,10 @@ public class OrganizerProfileFragment extends Fragment {
                 .document(user.getUid())
                 .get()
                 .addOnSuccessListener(document -> {
-                    if (!isAdded() || getView() == null) return;
+
+                    if (!isAdded() || getView() == null) {
+                        return;
+                    }
 
                     String name = firstNonEmpty(
                             document.getString("name"),
@@ -124,7 +135,10 @@ public class OrganizerProfileFragment extends Fragment {
                     tvAvatar.setText(name.substring(0, 1).toUpperCase());
                 })
                 .addOnFailureListener(error -> {
-                    if (!isAdded()) return;
+
+                    if (!isAdded()) {
+                        return;
+                    }
 
                     Toast.makeText(
                             requireContext(),
@@ -140,7 +154,9 @@ public class OrganizerProfileFragment extends Fragment {
                 });
     }
 
+    // Support different phone field names
     private String readPhone(DocumentSnapshot document) {
+
         String[] fields = {
                 "phone",
                 "Phone",
@@ -151,16 +167,23 @@ public class OrganizerProfileFragment extends Fragment {
         };
 
         for (String field : fields) {
+
             Object value = document.get(field);
 
-            if (value instanceof String && !((String) value).trim().isEmpty()) {
+            if (value instanceof String
+                    && !((String) value).trim().isEmpty()) {
+
                 return ((String) value).trim();
             }
 
             // Supports older documents where the phone was saved as a number.
             if (value instanceof Number) {
+
                 long number = ((Number) value).longValue();
-                if (number != 0) return String.valueOf(number);
+
+                if (number != 0) {
+                    return String.valueOf(number);
+                }
             }
         }
 
@@ -168,29 +191,37 @@ public class OrganizerProfileFragment extends Fragment {
     }
 
     private String firstNonEmpty(String... values) {
+
         for (String value : values) {
+
             if (value != null && !value.trim().isEmpty()) {
                 return value.trim();
             }
         }
+
         return "";
     }
 
     private String displayValue(String value) {
+
         return value == null || value.trim().isEmpty()
                 ? "Not provided"
                 : value;
     }
 
+    // Display Edit Organizer Profile dialog
     private void showEditDialog() {
+
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user == null) {
+
             Toast.makeText(
                     requireContext(),
                     "Please log in again.",
                     Toast.LENGTH_SHORT
             ).show();
+
             return;
         }
 
@@ -202,6 +233,7 @@ public class OrganizerProfileFragment extends Fragment {
 
         layout.setPadding(padding, padding, padding, 0);
 
+        // Organization input
         TextView organizationLabel = new TextView(requireContext());
         organizationLabel.setText("Organization");
         layout.addView(organizationLabel);
@@ -212,6 +244,7 @@ public class OrganizerProfileFragment extends Fragment {
         organizationInput.setText(savedOrganization);
         layout.addView(organizationInput);
 
+        // Phone input
         TextView phoneLabel = new TextView(requireContext());
         phoneLabel.setText("Contact Number");
 
@@ -241,13 +274,16 @@ public class OrganizerProfileFragment extends Fragment {
         dialog.setOnShowListener(d -> dialog.getButton(
                 AlertDialog.BUTTON_POSITIVE
         ).setOnClickListener(v -> {
+
             String organization = organizationInput.getText()
                     .toString().trim();
 
-            String phone = phoneInput.getText().toString().trim();
+            String phone = phoneInput.getText()
+                    .toString().trim();
 
             if (!phone.isEmpty()
                     && !phone.matches("[0-9+() -]{7,20}")) {
+
                 phoneInput.setError("Enter a valid contact number");
                 return;
             }
@@ -258,6 +294,7 @@ public class OrganizerProfileFragment extends Fragment {
         dialog.show();
     }
 
+    // Save organizer profile updates
     private void saveProfile(
             String uid,
             String organization,
@@ -266,14 +303,18 @@ public class OrganizerProfileFragment extends Fragment {
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("organization", organization);
-        // Save as String to preserve leading zeros and the + country code.
+
+        // Save phone as String to preserve leading zeros and country code.
         updates.put("phone", phone);
 
         db.collection("organizers")
                 .document(uid)
                 .set(updates, SetOptions.merge())
                 .addOnSuccessListener(unused -> {
-                    if (!isAdded() || getView() == null) return;
+
+                    if (!isAdded() || getView() == null) {
+                        return;
+                    }
 
                     savedOrganization = organization;
                     savedPhone = phone;
@@ -290,7 +331,10 @@ public class OrganizerProfileFragment extends Fragment {
                     dialog.dismiss();
                 })
                 .addOnFailureListener(error -> {
-                    if (!isAdded()) return;
+
+                    if (!isAdded()) {
+                        return;
+                    }
 
                     Toast.makeText(
                             requireContext(),
@@ -306,7 +350,9 @@ public class OrganizerProfileFragment extends Fragment {
                 });
     }
 
+    // Show signed-out state
     private void showSignedOutState() {
+
         tvProfileName.setText("Not signed in");
         tvFullName.setText("Not signed in");
         tvEmail.setText("Not provided");
@@ -315,17 +361,27 @@ public class OrganizerProfileFragment extends Fragment {
         tvAvatar.setText("O");
     }
 
+    // Logout organizer
     private void logoutOrganizer() {
+
+        // Clear SharedPreferences
+        SessionManager sessionManager =
+                new SessionManager(requireContext());
+
+        sessionManager.clearSession();
+
+        // Sign out from Firebase
         mAuth.signOut();
 
+        // Navigate to MainActivity
         Intent intent = new Intent(
                 requireActivity(),
-                OrganizerLoginActivity.class
+                MainActivity.class
         );
 
         intent.addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK
-                        | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                Intent.FLAG_ACTIVITY_NEW_TASK |
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
         );
 
         startActivity(intent);
